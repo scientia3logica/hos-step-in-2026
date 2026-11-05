@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hos-step-in-2026",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-11-04",
+  "build": {"command": "npm run build"},
+  "r2_buckets": [{"binding": "BUCKET", "bucket_name": "hos-step-in-2026-files"}]
+}

@@ -1,0 +1,7 @@
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {api} from './api.mjs';
+import {localBucket} from './local-bucket.mjs';
+const port=Number(process.env.PORT||8787);const env={BUCKET:localBucket('.local-data')};
+const assets={'/simulation.js':['simulation.js','text/javascript'],'/':['index.html','text/html; charset=utf-8'],'/styles.css':['styles.css','text/css'],'/community.js':['community.js','text/javascript'],'/app.js':['app.js','text/javascript']};
+createServer(async(req,res)=>{try{const url=new URL(req.url,'http://'+req.headers.host);let response;if(url.pathname.startsWith('/api/')){const chunks=[];let size=0;for await(const c of req){size+=c.length;if(size>51*1048576){res.writeHead(413);res.end('Upload too large');return;}chunks.push(c);}response=await api(new Request(url,{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})}),env);}else{const asset=assets[url.pathname];response=asset?new Response(await readFile(asset[0]),{headers:{'Content-Type':asset[1]}}):new Response('Not found',{status:404});}res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));}catch(e){console.error(e);res.writeHead(500);res.end('Local server error');}}).listen(port,'127.0.0.1',()=>console.log(`Local project: http://localhost:${port} (data: .local-data/)`));
