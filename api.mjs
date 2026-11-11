@@ -12,7 +12,7 @@ const match=path.match(/^\/api\/(posts|files)\/(.+)$/);if(match&&idPattern.test(
 // ---- Shared storage for the standalone site (replaces the Claude artifact runtime; no login) ----
 const COLS={
  messages:{max:1000,full:'drop',clean:d=>{const ch=String(d.ch||'talk');const nick=str(d.nick,20),text=str(d.text,500);if(!['talk','idea','result'].includes(ch)||!nick||!text)return null;return {ch,nick,text};}},
- models:{max:300,full:'reject',anyoneDeletes:true,clean:d=>{const author=str(d.author,20),fileName=str(d.fileName,200);if(!author||!fileName||!blobId(d.assetId))return null;return {author,name:str(d.name,120)||fileName,desc:str(d.desc,300),fileName,size:Math.max(0,Math.floor(Number(d.size)||0)),contentType:str(d.contentType,100),assetId:d.assetId,wrapped:!!d.wrapped};}},
+ models:{max:300,full:'reject',clean:d=>{const author=str(d.author,20),fileName=str(d.fileName,200);if(!author||!fileName||!blobId(d.assetId))return null;return {author,name:str(d.name,120)||fileName,desc:str(d.desc,300),fileName,size:Math.max(0,Math.floor(Number(d.size)||0)),contentType:str(d.contentType,100),assetId:d.assetId,wrapped:!!d.wrapped};}},
  explogs:{max:1000,full:'reject',clean:d=>{const expDate=String(d.expDate||''),author=str(d.author,20),body=str(d.body,2000);if(!/^\d{4}-\d{2}-\d{2}$/.test(expDate)||!author||!body)return null;const o={expDate,author,body};if(d.imageId!=null){if(!blobId(d.imageId))return null;o.imageId=d.imageId;o.imageName=str(d.imageName,200);}return o;}}
 };
 const MAX_BLOB=20*1048576;
@@ -62,13 +62,13 @@ async function shared(request,env,url){
   let d;try{d=await request.json();}catch{return err('잘못된 요청입니다.','bad_request',400);}
   const item=d&&typeof d==='object'?spec.clean(d):null;if(!item)return err('입력값을 확인해 주세요.','bad_request',400);
   for(const f of ['assetId','imageId'])if(item[f]&&!await bucket.get('blobmeta/'+item[f]))return err('첨부 파일을 찾을 수 없어요. 다시 올려 주세요.','bad_request',400);
-  const doc={id:newId('d'),...item,createdAt:Date.now(),deleteKey:crypto.randomUUID()};
+  const doc={id:newId('d'),...item,createdAt:Date.now()};
   const out=await mutate(bucket,key,data=>{const items=(data&&data.items)||[];if(items.length>=spec.max){if(spec.full==='reject')return {error:err('저장 공간이 가득 찼어요. 오래된 항목을 정리해 주세요.','quota_or_state',507)};items.length=spec.max-1;}return {data:{items:[doc,...items]}};});
-  if(out.error)return out.error;return json({id:doc.id,deleteKey:doc.deleteKey},201);
+  if(out.error)return out.error;return json({id:doc.id},201);
  }
  if(id&&m==='DELETE'){
   if(!docId(id))return err('찾을 수 없습니다.','not_found',404);let removed=null;
-  const out=await mutate(bucket,key,data=>{const items=(data&&data.items)||[];const it=items.find(x=>x.id===id);if(!it)return {error:err('찾을 수 없습니다.','not_found',404)};if(!spec.anyoneDeletes&&request.headers.get('X-Delete-Key')!==it.deleteKey)return {error:err('내가 올린 글만 삭제할 수 있어요.','permission_denied',403)};removed=it;return {data:{items:items.filter(x=>x!==it)}};});
+  const out=await mutate(bucket,key,data=>{const items=(data&&data.items)||[];const it=items.find(x=>x.id===id);if(!it)return {error:err('찾을 수 없습니다.','not_found',404)};removed=it;return {data:{items:items.filter(x=>x!==it)}};});
   if(out.error)return out.error;await removeBlobs(bucket,[removed.assetId,removed.imageId]);return json({ok:true});
  }
  return err('지원하지 않는 요청입니다.','bad_request',405);

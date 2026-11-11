@@ -7,7 +7,7 @@ The page is the published Claude artifact (copied in `artifact-source/`) turned 
 - `index.html`, `styles.css`, `app.js` — the artifact's markup, styles and script (3D lab, calculators, member space, experiment logs, Q&A, tutorial).
 - `community.js` — storage client. `app.js` was written for the Claude artifact runtime (`window.claude`); this file provides the same calls on top of the site's own API, so nobody needs a Claude account.
 - `api.mjs` — Worker API. Shared storage lives in the R2 bucket:
-  - `GET/POST /api/db/{messages|models|explogs}`, `DELETE /api/db/{col}/{id}` — messages and experiment logs can only be deleted with the delete key the author's browser received; shared models can be deleted by anyone (as the page says).
+  - `GET/POST /api/db/{messages|models|explogs}`, `DELETE /api/db/{col}/{id}` — any visitor can delete messages, experiment logs and shared models (no login, no delete keys). Deleting a model or log also deletes its uploaded file.
   - `GET/PUT /api/db/lab/dimensions` — shared faucet dimensions.
   - `POST /api/blob`, `GET /_blob/{id}` — uploaded files (20MB max). Served with `nosniff` and a sandbox CSP; only images/videos are shown inline.
   - The older `/api/posts` and `/api/dimensions` endpoints are kept for existing data.

@@ -3,11 +3,7 @@
    This file provides the same small surface on top of this site's own Worker API (/api/db, /api/blob, /_blob). */
 (function(){
 'use strict';
-var KEYS_LS='hos.deleteKeys';
 var POLL_MS=5000;
-function keys(){try{return JSON.parse(localStorage.getItem(KEYS_LS)||'{}')||{}}catch(e){return {}}}
-function saveKey(path,key){try{var k=keys();k[path]=key;localStorage.setItem(KEYS_LS,JSON.stringify(k))}catch(e){}}
-function dropKey(path){try{var k=keys();delete k[path];localStorage.setItem(KEYS_LS,JSON.stringify(k))}catch(e){}}
 function fail(res,body){var e=new Error((body&&body.error)||('HTTP '+res.status));e.code=(body&&body.code)||('http_'+res.status);throw e}
 function call(method,url,body,headers){
   var opt={method:method,headers:headers||{},cache:'no-cache'};
@@ -35,7 +31,7 @@ function query(col,lim){
     limit:function(n){return query(col,n)},
     get:function(){return call('GET','/api/db/'+col+(lim?'?limit='+lim:'')).then(snapOf)},
     onSnapshot:function(next,error){return poll(function(){return call('GET','/api/db/'+col+(lim?'?limit='+lim:'')).then(function(l){return {raw:l,snap:snapOf(l)}})},next,error)},
-    add:function(data){return call('POST','/api/db/'+col,data).then(function(r){saveKey(col+'/'+r.id,r.deleteKey);return {id:r.id}})}
+    add:function(data){return call('POST','/api/db/'+col,data).then(function(r){return {id:r.id}})}
   };
   return q;
 }
@@ -45,7 +41,7 @@ function doc(path){
   return {
     get:function(){return call('GET',url).then(function(r){return docSnap(r&&r.data)})},
     set:function(data){return call('PUT',url,data)},
-    delete:function(){var k=keys()[path];return call('DELETE',url,undefined,k?{'X-Delete-Key':k}:{}).then(function(r){dropKey(path);return r})},
+    delete:function(){return call('DELETE',url)},
     onSnapshot:function(next,error){return poll(function(){return call('GET',url).then(function(r){var d=r&&r.data||null;return {raw:d,snap:docSnap(d)}})},next,error)}
   };
 }
