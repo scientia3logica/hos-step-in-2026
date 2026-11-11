@@ -1,3 +1,80 @@
-
-(()=>{let tab='chat',signature='',busy=false;const $=id=>document.getElementById(id);let own={};try{own=JSON.parse(localStorage.getItem('hos-own')||'{}');$('nickname').value=localStorage.getItem('hos-nick')||'';}catch{}const label={chat:'멤버 소통',proposal:'산출물 제안',result:'산출물 결과'};document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;signature='';document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('titlelabel').hidden=tab==='chat';$('posttitle').required=tab!=='chat';$('filelabel').hidden=tab==='chat';$('feedtitle').textContent=label[tab];$('sendpost').textContent=tab==='chat'?'메시지 보내기 ↗':'게시물 등록하기 ↗';$('bodylabel').textContent=tab==='chat'?'메시지':'설명';refresh();});function elem(tag,text){const el=document.createElement(tag);el.textContent=text;return el;}async function refresh(){const current=tab;try{const res=await fetch('/api/posts?kind='+current,{cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'불러오기 실패');if(current!==tab)return;const sig=JSON.stringify(data);if(sig===signature)return;signature=sig;$('feed').replaceChildren();if(!data.length)$('feed').append(elem('p','아직 글이 없습니다. 첫 의견을 남겨 주세요.'));for(const p of data){const card=elem('article','');card.className='post';card.append(elem('small',p.nickname+' · '+new Date(p.created).toLocaleString('ko-KR')));if(p.title)card.append(elem('h3',p.title));card.append(elem('p',p.body));if(p.file){const url='/api/files/'+encodeURIComponent(p.id);if(p.file.type.startsWith('image/')){const im=document.createElement('img');im.src=url;im.alt=p.file.name;im.loading='lazy';card.append(im);}else if(p.file.type.startsWith('video/')){const v=document.createElement('video');v.src=url;v.controls=true;v.preload='metadata';card.append(v);}const a=elem('a','↓ '+p.file.name+' ('+(p.file.size/1048576).toFixed(1)+' MB)');a.href=url;a.download=p.file.name;card.append(a);}if(own[p.id]){const b=elem('button','내 글 삭제');b.className='textlink';b.onclick=async()=>{if(!confirm('이 글과 첨부파일을 삭제할까요?'))return;try{const r=await fetch('/api/posts/'+p.id,{method:'DELETE',headers:{'X-Delete-Key':own[p.id]}});if(!r.ok)throw Error('삭제하지 못했습니다.');delete own[p.id];try{localStorage.setItem('hos-own',JSON.stringify(own));}catch{}signature='';refresh();}catch(e){$('hubstatus').textContent=e.message;}};card.append(b);}$('feed').append(card);}}catch(e){$('hubstatus').textContent=e.message+' · 새로고침으로 다시 시도하세요.';}}$('postform').onsubmit=async e=>{e.preventDefault();if(busy)return;const file=$('postfile').files[0];if(tab!=='chat'&&file&&file.size>50*1048576){$('hubstatus').textContent='파일은 50MB 이하로 올려 주세요.';return;}busy=true;$('sendpost').disabled=true;$('hubstatus').textContent='등록 중입니다…';const fd=new FormData();fd.set('kind',tab);fd.set('nickname',$('nickname').value.trim());fd.set('title',tab==='chat'?'':$('posttitle').value.trim());fd.set('body',$('postbody').value.trim());if(tab!=='chat'&&file)fd.set('file',file);try{const r=await fetch('/api/posts',{method:'POST',body:fd});const data=await r.json();if(!r.ok)throw Error(data.error||'등록 실패');own[data.id]=data.deleteKey;try{localStorage.setItem('hos-own',JSON.stringify(own));localStorage.setItem('hos-nick',$('nickname').value);}catch{}$('postbody').value='';$('posttitle').value='';$('postfile').value='';$('hubstatus').textContent='등록했습니다.';signature='';await refresh();}catch(e){$('hubstatus').textContent=e.message;}finally{busy=false;$('sendpost').disabled=false;}};$('reload').onclick=()=>{signature='';refresh();};refresh();setInterval(()=>{if(!document.hidden)refresh();},5000);})();
-
+/* Standalone storage client for the site (no Claude login).
+   app.js was written for the Claude artifact runtime and calls window.claude.use('db'|'assets'|'downloads'|'user').
+   This file provides the same small surface on top of this site's own Worker API (/api/db, /api/blob, /_blob). */
+(function(){
+'use strict';
+var KEYS_LS='hos.deleteKeys';
+var POLL_MS=5000;
+function keys(){try{return JSON.parse(localStorage.getItem(KEYS_LS)||'{}')||{}}catch(e){return {}}}
+function saveKey(path,key){try{var k=keys();k[path]=key;localStorage.setItem(KEYS_LS,JSON.stringify(k))}catch(e){}}
+function dropKey(path){try{var k=keys();delete k[path];localStorage.setItem(KEYS_LS,JSON.stringify(k))}catch(e){}}
+function fail(res,body){var e=new Error((body&&body.error)||('HTTP '+res.status));e.code=(body&&body.code)||('http_'+res.status);throw e}
+function call(method,url,body,headers){
+  var opt={method:method,headers:headers||{},cache:'no-cache'};
+  if(body!==undefined){if(body instanceof Blob){opt.body=body}else{opt.body=JSON.stringify(body);opt.headers['Content-Type']='application/json'}}
+  return fetch(url,opt).then(function(res){
+    return res.json().catch(function(){return null}).then(function(data){if(!res.ok)fail(res,data);return data});
+  },function(){var e=new Error('network');e.code='network';throw e});
+}
+function snapOf(list){return {docs:list.map(function(o){var id=o.id;return {id:id,data:function(){var c=Object.assign({},o);delete c.id;return c}}})}}
+/* Poll a getter while the tab is visible; deliver only when the result changes. */
+function poll(get,next,error){
+  var stop=false,sig=null,timer=null;
+  function tick(){
+    if(stop)return;
+    if(document.hidden){timer=setTimeout(tick,POLL_MS);return}
+    get().then(function(v){if(stop)return;var s=JSON.stringify(v.raw);if(s!==sig){sig=s;next(v.snap)}},function(er){if(!stop&&error)error(er)})
+      .then(function(){if(!stop)timer=setTimeout(tick,POLL_MS)});
+  }
+  tick();
+  return function(){stop=true;clearTimeout(timer)};
+}
+function query(col,lim){
+  var q={
+    orderBy:function(){return q},
+    limit:function(n){return query(col,n)},
+    get:function(){return call('GET','/api/db/'+col+(lim?'?limit='+lim:'')).then(snapOf)},
+    onSnapshot:function(next,error){return poll(function(){return call('GET','/api/db/'+col+(lim?'?limit='+lim:'')).then(function(l){return {raw:l,snap:snapOf(l)}})},next,error)},
+    add:function(data){return call('POST','/api/db/'+col,data).then(function(r){saveKey(col+'/'+r.id,r.deleteKey);return {id:r.id}})}
+  };
+  return q;
+}
+function doc(path){
+  var url='/api/db/'+path.split('/').map(encodeURIComponent).join('/');
+  function docSnap(d){return {exists:!!d,data:function(){return d}}}
+  return {
+    get:function(){return call('GET',url).then(function(r){return docSnap(r&&r.data)})},
+    set:function(data){return call('PUT',url,data)},
+    delete:function(){var k=keys()[path];return call('DELETE',url,undefined,k?{'X-Delete-Key':k}:{}).then(function(r){dropKey(path);return r})},
+    onSnapshot:function(next,error){return poll(function(){return call('GET',url).then(function(r){var d=r&&r.data||null;return {raw:d,snap:docSnap(d)}})},next,error)}
+  };
+}
+var db={collection:function(c){return query(c,0)},doc:doc};
+var assets={
+  upload:function(blob){
+    if(blob.size>20*1048576){var e=new Error('too large');e.code='too_large';return Promise.reject(e)}
+    return call('POST','/api/blob',blob,{'Content-Type':blob.type||'application/octet-stream'}).then(function(r){return {id:r.id,url:'/_blob/'+r.id}});
+  },
+  /* Files are removed by the server together with the model or log that uses them. */
+  delete:function(){return Promise.resolve()}
+};
+var downloads={
+  save:function(o){
+    var blob=o.data instanceof Blob?o.data:new Blob([o.data],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=o.filename||'download';document.body.append(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    return Promise.resolve({ok:true});
+  }
+};
+var user={can:function(){return Promise.resolve(true)},isOwner:function(){return Promise.resolve(false)},canEdit:function(){return Promise.resolve(false)}};
+var health=null;
+function online(){if(!health)health=call('GET','/api/health').then(function(){return true},function(){return false});return health}
+window.claude={use:function(name){
+  if(name==='downloads')return Promise.resolve(downloads);
+  return online().then(function(ok){
+    if(!ok)return null;
+    return {db:db,assets:assets,user:user}[name]||null;
+  });
+}};
+})();
