@@ -1,14 +1,398 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HOS STEP IN 2026 | 물을 아끼는 작은 변화</title><meta name="description" content="학교 수도꼭지의 물 낭비와 옷 젖음 문제를 해결하는 학생 설계 프로젝트"><link rel="stylesheet" href="/styles.css"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script></head><body><header><nav><a href="#" class="brand">HOS STEP IN<span>2026</span></a><div class="links"><a href="#simulation">3D 실험실</a><a href="#problem">공동 모델</a><a href="#community">멤버 공간</a><a href="#design">산출물 설계</a><a href="#process">제작 과정</a><a href="#experiment">실험 기록</a></div><a class="navcta" href="#community">함께 참여하기 ↗</a></nav></header><main>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="학교 수도꼭지의 물 낭비와 옷 젖음 문제를 해결하는 학생 설계 프로젝트">
+<title>2026 호남삼육중학교 이공계 Step-in | 물을 아끼는 작은 변화</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
 
-<section id="problem" class="section"><p class="eyebrow">SHARED MODEL LAB</p><h2>함께 올리고, 치수로 만드는 수도꼭지</h2><p>3D 모델·실험 영상·수도꼭지 사진을 함께 모으는 공개 공간입니다. 누구나 업로드하고 다른 사람의 모델도 삭제할 수 있습니다.</p><form id="model-form"><label>작성자 <input name="nickname" required maxlength="30"></label><label>모델 이름 <input name="title" required maxlength="100"></label><label>설명 <input name="body" required maxlength="4000"></label><label>모델·사진·영상 (50MB 이하) <input name="file" type="file" accept=".stl,.obj,.jpg,.jpeg,.png,.webp,.mp4,.webm" required></label><button>모델 공유하기</button></form><p id="model-status" role="status"></p><button id="models-refresh">목록 새로고침</button><div id="models-list"></div><h3>공동 수도꼭지 치수 · mm</h3><p>누구나 수정 가능합니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 사진 기반 기본값은 실측값이 아닙니다.</p><form id="dimensions-form"><label>벽에서 출수구까지 <input name="reach" type="number" min="10" max="500" value="125" required></label><label>모델 전체 높이 <input name="height" type="number" min="10" max="500" value="229" required></label><label>연결부 외경 <input name="diameter" type="number" min="10" max="500" value="28" required></label><button>공동 치수 저장 · 모델 생성</button></form><p id="dimensions-status" role="status"></p><p>현재 기능은 기준 수도꼭지 형상을 치수에 맞춰 변형합니다. 사진·영상 자동 분석 및 3D 재구성 서비스는 아직 연결되지 않았습니다. 연결부 외경은 물이 나오는 유효 출구 지름과 다릅니다.</p></section>
+<header class="site-header">
+  <div class="wrap">
+    <a class="logo" href="#top">2026 호남삼육중 <span>Step-in</span></a>
+    <nav aria-label="주요 메뉴">
+      <a href="#simulation">3D 실험실</a>
+      <a href="#problem">공동 모델</a>
+      <a href="#community">멤버 공간</a>
+      <a href="#experiment">실험 기록</a>
+    </nav>
+    <button class="btn sm" id="tutBtn" type="button" aria-haspopup="dialog">튜토리얼</button>
+    <button class="btn sm" id="qaBtn" type="button" aria-haspopup="dialog">Q&amp;A</button>
+    <a class="btn primary sm header-cta" href="#community">함께 참여하기</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="note" style="margin-bottom:14px">학교 수도꼭지 개선 프로젝트 · 2026</p>
+        <h1>물은 아끼고,<br>옷은 <em>보송하게.</em></h1>
+        <p class="lead">매일 사용하는 학교 수도꼭지. 작은 불편을 발견하고, 더 나은 물 사용을 설계합니다.</p>
+        <div class="actions">
+          <a class="btn primary" href="#simulation">3D 실험실 둘러보기</a>
+          <a class="btn" href="#experiment">실험 기록하기</a>
+          <button class="btn" type="button" id="tutBtn2">튜토리얼 시작</button>
+        </div>
+        <p class="stage">학생 탐구 프로젝트 · 설계 제안 및 검증 단계</p>
+      </div>
+      <figure class="hero-art" style="margin:0">
+        <svg viewBox="0 0 520 420" role="img" aria-label="벽에 붙은 수도꼭지 끝에 물 튐 방지 가이드가 달려 있고, 물이 가이드를 타고 세면대로 흐르는 개념도">
+          <rect x="0" y="0" width="70" height="340" fill="var(--surface-2)"/>
+          <path d="M70 120 H250 Q300 120 300 165 V195" fill="none" stroke="var(--ink)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M70 120 H250 Q300 120 300 165 V195" fill="none" stroke="var(--surface)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="52" y="86" width="26" height="68" rx="8" fill="var(--ink)"/>
+          <path d="M140 108 L128 62" stroke="var(--ink)" stroke-width="10" stroke-linecap="round"/>
+          <circle cx="126" cy="58" r="9" fill="var(--signal)" stroke="var(--ink)" stroke-width="3"/>
+          <rect x="288" y="192" width="24" height="12" rx="3" fill="var(--ink)"/>
+          <path d="M262 236 Q300 214 338 236 Q344 244 336 246 H264 Q256 244 262 236 Z" fill="var(--signal)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+          <g fill="var(--water)">
+            <ellipse class="drop" cx="300" cy="208" rx="3.2" ry="5"/>
+            <ellipse class="drop d2" cx="300" cy="208" rx="3.2" ry="5"/>
+            <ellipse class="drop d3" cx="300" cy="208" rx="3.2" ry="5"/>
+          </g>
+          <path d="M268 250 Q262 290 276 318" fill="none" stroke="var(--water)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 7"/>
+          <path d="M332 250 Q338 290 324 318" fill="none" stroke="var(--water)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 7"/>
+          <path d="M392 150 Q420 130 470 150 V300 Q470 330 440 330 H410 Q392 330 392 300 Z" fill="var(--water-soft)" stroke="var(--line)" stroke-width="2"/>
+          <text x="431" y="236" text-anchor="middle" font-size="15" fill="var(--muted)" font-family="IBM Plex Sans KR, sans-serif">옷소매</text>
+          <path d="M360 232 L392 232" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 5"/>
+          <path d="M386 224 L396 232 L386 240" fill="none" stroke="var(--muted)" stroke-width="2"/>
+          <rect x="110" y="340" width="300" height="52" rx="8" fill="var(--muted)" opacity=".55"/>
+          <rect x="130" y="340" width="260" height="10" rx="5" fill="var(--water)" opacity=".55"/>
+          <text x="260" y="378" text-anchor="middle" font-size="14" fill="var(--bg)" font-family="IBM Plex Sans KR, sans-serif">세면대</text>
+        </svg>
+        <figcaption>개념 이미지 · 유량 조절 노즐과 물 튐 방지 가이드 (FLOW GUARD). 실제 제작 형태는 실험 후 결정합니다.</figcaption>
+      </figure>
+    </div>
+    <div class="pillars">
+      <div class="pillar"><b>절수</b><span>필요한 만큼 흐르는 물</span></div>
+      <div class="pillar"><b>물 튐</b><span>옷으로 향하는 물방울 줄이기</span></div>
+      <div class="pillar"><b>검증</b><span>같은 조건에서 전후 비교</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3D LAB -->
+<section id="simulation" style="background:var(--surface-2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>내 모델을 결합하고, 물의 흐름을 살펴보세요.</h2>
+      <p>학교 수돗가 사진을 참고한 벽면 고정형 레버 수도꼭지입니다. 원형 벽 고정판, 직각으로 꺾인 몸체, 아래를 향한 호스 연결부, 가는 곡선관으로 이어진 원형 버튼통, 석재 수조와 배수구를 반영했습니다. 치수는 실측 전 참고값입니다. STL·OBJ·PLY·GLB 같은 3D 모델을 수도꼭지 아래에 배치하면, 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드한 모델은 이 브라우저에서만 처리됩니다.</p>
+    </div>
+
+    <div class="viewer-wrap">
+      <div>
+        <div class="viewer" id="viewer">
+          <canvas id="cv" aria-label="3D 수도꼭지 뷰어"></canvas>
+          <span class="tag">3D 뷰어 · 수도꼭지와 부착물</span>
+          <div class="msg" id="viewerMsg">시작 버튼을 누른 후 모델을 올리세요.<br>드래그로 회전, 휠로 확대할 수 있습니다.</div>
+        </div>
+        <label class="check" style="margin-top:12px"><input type="checkbox" id="collide" checked> 모델 표면 충돌 적용 (해제하면 동일 출구 조건의 직선 흐름 비교)</label>
+        <div class="vol" id="volBox">
+          <div><span class="vl">누적 물 사용량</span><b id="volVal">0 mL</b></div>
+          <div class="vs"><span id="volTime">경과 0.0초</span><span id="volRate">현재 유량 –</span><span id="volCup"></span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <button class="btn water" id="startBtn">3D 시뮬레이션 시작</button>
+          <button class="btn" id="pauseBtn" disabled>일시정지</button>
+          <button class="btn" id="resetBtn" disabled>초기화</button>
+          <button class="btn" id="viewBtn" disabled>시점 맞추기</button>
+        </div>
+        <div class="toolbar">
+          <label class="btn" id="upLabel" style="cursor:pointer;white-space:normal" aria-disabled="true">📂 모델 업로드
+            <input type="file" id="modelFile" accept=".stl,.obj,.ply,.off,.glb,.gltf,.html,.htm" hidden disabled>
+          </label>
+          <button class="btn" id="exampleBtn" disabled title="수도꼭지 연결부에 끼우는 층류 캡: 끼움 슬리브 → 곡면 수축부 → 벌집 정류부 → 직선관 (바닥까지 닿지 않아 손 씻기 가능)">예제 모델 배치</button>
+        </div>
+        <p class="note" style="margin:-6px 0 14px">지원 형식: STL · OBJ · PLY · OFF · GLB · GLTF · HTML (최대 20MB). HTML은 실행하지 않고 안에 든 3D 데이터만 읽어요.</p>
+        <div class="pct">
+          <label for="pctRange">물줄기 출력</label>
+          <input type="range" id="pctRange" min="0" max="100" step="5" value="100" aria-describedby="pctInfo">
+          <output id="pctVal" for="pctRange">100%</output>
+          <small id="pctInfo" aria-live="polite">수도를 얼마나 열었는지 조절해요. 100%는 입력한 개선 유량 그대로예요.</small>
+        </div>
+        <div class="pct">
+          <label for="speedRange">재생 속도</label>
+          <input type="range" id="speedRange" min="0.1" max="2" step="0.1" value="1" aria-describedby="speedInfo">
+          <output id="speedVal" for="speedRange">1.0x</output>
+          <small id="speedInfo">1.0x가 실제 시간이에요. 물이 실제로 얼마나 빠르게 흐르는지 보려면 1.0x, 자세히 보려면 0.1x까지 낮추세요.</small>
+        </div>
+        <div class="stack">
+          <div class="row">
+            <div><label class="f" for="mLen">모델 최대 길이 (mm)</label><input class="field" id="mLen" type="number" min="5" max="300" step="1" value="40"></div>
+            <div><label class="f" for="mGap">출구 아래 간격 (mm · 음수=끼워지는 길이)</label><input class="field" id="mGap" type="number" min="-60" max="200" step="1" value="6"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="zUp"> CAD 모델 (Z축이 위쪽)</label>
+          <p class="note" style="margin:2px 0 -4px"><b>① 기존 유량</b> · 양동이로 물을 받아 재세요</p>
+          <div class="row">
+            <div><label class="f" for="qV">받은 물의 양 (mL)</label><input class="field" id="qV" type="number" min="1" step="50" value="2000"></div>
+            <div><label class="f" for="qT">걸린 시간 (초)</label><input class="field" id="qT" type="number" min="1" step="0.5" value="15"></div>
+          </div>
+          <p class="note" style="margin:2px 0 -4px"><b>② 출구 지름</b> · 자(캘리퍼스)로 안쪽 지름을 재세요</p>
+          <div class="row">
+            <div><label class="f" for="dOld">기존 출구 지름 (mm)</label><input class="field" id="dOld" type="number" min="1" max="40" step="0.5" value="10"></div>
+            <div><label class="f" for="dNew">개선 출구 지름 (mm)</label><input class="field" id="dNew" type="number" min="1" max="40" step="0.5" value="8"></div>
+          </div>
+          <details class="opt">
+            <summary>③ (선택) 개선품도 직접 재었다면 입력</summary>
+            <div class="row" style="margin-top:10px">
+              <div><label class="f" for="qV2">받은 물의 양 (mL)</label><input class="field" id="qV2" type="number" min="1" step="50" placeholder="비우면 추정"></div>
+              <div><label class="f" for="qT2">걸린 시간 (초)</label><input class="field" id="qT2" type="number" min="1" step="0.5" placeholder="비우면 추정"></div>
+            </div>
+          </details>
+        </div>
+        <div class="results" aria-live="polite">
+          <div class="res"><span>기존 유량</span><b id="rO">–</b><small>L/분</small></div>
+          <div class="res"><span>개선 유량 (예상)</span><b id="rQ">–</b><small>L/분</small></div>
+          <div class="res"><span>예상 절수율</span><b id="rP">–</b><small>%</small></div>
+          <div class="res"><span>예상 절수량</span><b id="rS">–</b><small>L/분</small></div>
+        </div>
+        <p class="note" id="simNote"></p>
+        <details class="assump">
+          <summary>계산 가정과 한계 — 실제 성능 인증용이 아닙니다</summary>
+          <p>물줄기는 중력과 삼각형 표면 충돌을 적용한 입자 경로 시각화이고, 눈으로 따라가기 쉽도록 느린 화면으로 재생합니다. 내부 유동, 난류, 압력 손실, 누수, 실제 비산량을 푸는 CFD 해석이 아니며, 입자 이동 속도는 보기 좋게 조정됩니다. 물 튐 수치는 제공하지 않습니다.</p>
+          <p>절수량은 업로드 형상에서 자동 판정하지 않습니다. ① 양동이로 받은 물의 양과 시간으로 기존 유량(L/분)을 구하고, ② 기존·개선 출구 지름으로 같은 수압에서 유량이 출구 단면적에 비례한다고 가정해 <b>개선 유량 = 기존 유량 × (개선 지름 ÷ 기존 지름)²</b>로 추정합니다. 개선품으로도 같은 방법으로 물을 받아 쟀다면 그 값을 입력하면 추정 대신 측정값을 씁니다. 수도관 자체가 유량을 제한하면 추정이 실제보다 크게 나올 수 있으니 측정값으로 보정하세요. 구멍이 여러 개면 전체 출구 면적과 같은 면적의 원 지름을 입력하세요.</p>
+          <p>모델은 최대 길이에 맞춰 자동 축척됩니다. 원본 단위는 자동 인식하지 않으므로 실제 길이를 입력하세요. 복잡한 모델은 12만 삼각형 이하로 단순화해 주세요. 3D 엔진 로딩에는 인터넷 연결이 필요합니다.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHARED MODELS -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>함께 올리고, 치수로 만드는 수도꼭지</h2>
+      <p>3D 모델, 실험 영상, 수도꼭지 사진, HTML 같은 자료 파일을 함께 모으는 공개 공간입니다. 누구나 업로드하고 다른 사람의 모델도 삭제할 수 있습니다.</p>
+    </div>
+    <div class="status" id="shareStatus"><i></i><span>공동 저장 연결을 확인하는 중…</span></div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3 style="margin-bottom:16px">모델 공유하기</h3>
+        <div class="stack">
+          <div class="row">
+            <div><label class="f" for="uAuthor">작성자</label><input class="field" id="uAuthor" maxlength="20" placeholder="닉네임"></div>
+            <div><label class="f" for="uName">모델 이름</label><input class="field" id="uName" maxlength="40" placeholder="예: 물받이 돔 v2"></div>
+          </div>
+          <div><label class="f" for="uDesc">설명</label><textarea class="field" id="uDesc" maxlength="300" placeholder="무엇을 만들었는지, 어떤 점을 확인하고 싶은지 적어 주세요."></textarea></div>
+          <div><label class="f" for="uFile">파일 (20MB 이하)</label><input class="field" id="uFile" type="file" accept=".stl,.obj,.ply,.off,.glb,.gltf,.step,.stp,.html,.htm,.txt,.md,.csv,.json,.svg,.pdf,image/*,video/*"></div>
+          <p class="note">올릴 수 있는 형식: 3D 모델(STL, OBJ, PLY, OFF, GLB, GLTF, STEP) · 자료(HTML, PDF, TXT, MD, CSV, JSON) · 이미지 · 영상. HTML은 실행하지 않고 소스만 보여 줍니다. ZIP, Office 문서는 지원하지 않습니다. 20MB는 이 공간의 업로드 최대치입니다.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn water" id="uBtn">모델 공유하기</button>
+            <span class="note" id="uNote" aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-bottom:6px">공동 수도꼭지 치수 · mm</h3>
+        <p class="note" style="margin-bottom:16px">누구나 수정할 수 있습니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 사진 기반 기본값은 실측값이 아닙니다.</p>
+        <div class="row">
+          <div><label class="f" for="dReach">벽에서 출수구 중심까지</label><input class="field" id="dReach" type="number" min="40" max="400" step="1" value="80"></div>
+          <div><label class="f" for="dH">전체 높이 (출구~레버)</label><input class="field" id="dH" type="number" min="60" max="500" step="1" value="110"></div>
+          <div><label class="f" for="dOD">연결부 외경 (몸체 굵기)</label><input class="field" id="dOD" type="number" min="6" max="60" step="1" value="20"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
+          <button class="btn water" id="dSave">공동 치수 저장 · 모델 생성</button>
+          <span class="note" id="dNote" aria-live="polite"></span>
+        </div>
+        <p class="note" style="margin-top:14px">현재 기능은 학교 수돗가 사진을 참고한 기준 수도꼭지 형상을 치수에 맞춰 변형합니다. 전체 높이는 연결부 아래 끝에서 레버 윗면까지입니다. 사진·영상 자동 분석과 3D 재구성은 아직 연결되지 않았습니다. 연결부 외경은 물이 나오는 유효 출구 지름과 다릅니다.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:36px">
+      <h3>올라온 모델</h3>
+      <span class="note" id="mCount"></span>
+    </div>
+    <div class="models" id="models"></div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community" style="background:var(--surface-2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>아이디어를 나누고, 결과를 함께 쌓아요.</h2>
+      <p>로그인 없이 닉네임으로 참여하세요. 링크를 가진 누구나 글을 볼 수 있는 공개 공간입니다.</p>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist" aria-label="멤버 공간 분류">
+        <button class="tab" role="tab" id="tab-talk" data-ch="talk" aria-selected="true">💬 멤버 소통</button>
+        <button class="tab" role="tab" id="tab-idea" data-ch="idea" aria-selected="false">💡 산출물 제안</button>
+        <button class="tab" role="tab" id="tab-result" data-ch="result" aria-selected="false">📁 산출물 결과</button>
+        <button class="tab" role="tab" id="tab-log" data-ch="log" aria-selected="false">🧪 실험로그</button>
+      </div>
+      <div class="grid2" id="msgPane">
+        <div class="stack" style="align-content:start">
+          <div><label class="f" for="cNick">닉네임</label><input class="field" id="cNick" maxlength="20" placeholder="닉네임"></div>
+          <div><label class="f" for="cText">메시지</label><textarea class="field" id="cText" maxlength="500" placeholder="아이디어나 질문을 남겨 주세요."></textarea></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn primary" id="cSend">메시지 보내기</button>
+            <span class="note" id="cNote" aria-live="polite"></span>
+          </div>
+          <p class="note">닉네임은 본인 인증이 아닙니다. 개인정보를 올리지 마세요. 내가 작성한 글은 같은 브라우저에서 삭제할 수 있습니다.</p>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3 id="feedTitle">멤버 소통</h3>
+            <span class="note">최근 100개 표시</span>
+          </div>
+          <div class="feed" id="feed" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="logPane" hidden>
+        <div class="syncbox">
+          <div class="status" id="logSync" style="margin-bottom:0"><i></i><span>실험로그 파일 상태를 확인하는 중…</span></div>
+          <div class="row2">
+            <button class="btn sm water" id="lfView" type="button">파일 내용 보기</button>
+            <button class="btn sm" id="lfTxt" type="button">TXT로 내려받기</button>
+            <button class="btn sm" id="lfCsv" type="button">CSV로 내려받기</button>
+            <button class="btn sm" id="lfPdf" type="button">PDF로 내려받기</button>
+            <button class="btn sm" id="lfDocx" type="button">한글·Word용 DOCX</button>
+            <span class="note" id="lfNote" aria-live="polite"></span>
+          </div>
+          <pre class="src" id="lfPre" hidden style="max-height:280px"></pre>
+        </div>
+        <div class="grid2">
+          <div class="stack" style="align-content:start">
+            <div class="row">
+              <div><label class="f" for="lgDate">실험 일자</label><input class="field" id="lgDate" type="date"></div>
+              <div><label class="f" for="lgAuthor">작성자</label><input class="field" id="lgAuthor" maxlength="20" placeholder="닉네임"></div>
+            </div>
+            <div><label class="f">게시 일자</label><div class="note" style="min-height:44px;display:flex;align-items:center">올리는 순간의 날짜·시간이 자동으로 기록돼요.</div></div>
+            <div><label class="f" for="lgBody">실험 내용</label><textarea class="field" id="lgBody" maxlength="2000" style="min-height:140px" placeholder="실험 조건, 방법, 결과, 느낀 점을 적어 주세요. (한 번에 실험 하나)"></textarea></div>
+            <div><label class="f" for="lgImg">모델 이미지 (선택 · 20MB 이하)</label><input class="field" id="lgImg" type="file" accept="image/*"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn primary" id="lgBtn" type="button">실험로그 올리기</button>
+              <span class="note" id="lgNote" aria-live="polite"></span>
+            </div>
+            <p class="note">모두가 볼 수 있는 공개 공간이에요. 개인정보를 올리지 마세요. 올린 로그는 누구에게나 보이고 실험로그 파일에 바로 기록돼요. 내가 올린 로그는 같은 브라우저에서 삭제할 수 있고, 삭제하면 파일에서도 빠져요.</p>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><h3>실험로그</h3><span class="note" id="lgCount"></span></div>
+            <div class="feed" id="lgFeed" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>우리 학교에서는 얼마나 아낄 수 있을까요?</h2>
+      <p>측정한 유량을 입력해 예상 절수량을 계산하세요. 초기값은 계산 방법을 보여주기 위한 예시이며, 실제 성능을 뜻하지 않습니다.</p>
+    </div>
+    <div class="impact">
+      <div class="panel">
+        <div class="row">
+          <div><label class="f" for="iA">기존 유량 (L/분)</label><input class="field" id="iA" type="number" min="0" step="0.1" value="6"></div>
+          <div><label class="f" for="iB">개선 유량 (L/분)</label><input class="field" id="iB" type="number" min="0" step="0.1" value="4"></div>
+          <div><label class="f" for="iS">1회 사용 시간 (초)</label><input class="field" id="iS" type="number" min="0" step="1" value="20"></div>
+          <div><label class="f" for="iN">하루 사용 횟수 (회)</label><input class="field" id="iN" type="number" min="0" step="1" value="100"></div>
+        </div>
+        <p class="formula">절수량 = (기존 유량 − 개선 유량) × 1회 사용 시간 ÷ 60 × 하루 사용 횟수<br>아래 값은 손 씻는 시간이 동일하다는 조건의 추정치입니다.</p>
+      </div>
+      <div class="big" aria-live="polite">
+        <small>하루 예상 절수량</small>
+        <b><span id="iOut">66.7</span> <span>L / 일</span></b>
+        <small id="iPct">기존 대비 33.3% 절감 · 입력한 예시 조건 기준</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIMENT -->
+<section id="experiment" style="background:var(--surface-2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>좋은 아이디어는, 측정으로 증명합니다.</h2>
+      <p>같은 시간 동안 받은 물의 양과 사용자 위치에 둔 흡수지의 젖은 면적을 기록하세요. 이 브라우저에 자동 저장됩니다.</p>
+    </div>
+    <div class="log-actions">
+      <button class="btn water" id="lAdd">측정 추가</button>
+      <button class="btn" id="lCsv">실험 기록 CSV 내려받기</button>
+      <span class="note" id="lNote" aria-live="polite"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>회차</th><th>기존 물 사용량 (mL)</th><th>개선 물 사용량 (mL)</th><th>기존 젖은 면적 (cm²)</th><th>개선 젖은 면적 (cm²)</th><th><span class="sr" style="position:absolute;left:-9999px">삭제</span></th></tr></thead>
+        <tbody id="lBody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="lEmpty" style="margin-top:14px">아직 측정값이 없습니다. “측정 추가”를 눌러 첫 회차를 기록하세요.</div>
+    <div class="summary" id="lSum" aria-live="polite"></div>
+    <p class="note" style="margin-top:16px">실험 조건: 측정 시간, 수도 개방 정도, 손의 위치, 흡수지 위치·크기를 일정하게 유지하세요. 기록은 기기 간 공유되지 않습니다.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="close">
+  <div class="wrap">
+    <p>작은 변화가 더 나은 학교를 만듭니다.</p>
+    <h2>매일 쓰는 물, 더 나은 방향으로.</h2>
+    <p>물 절약과 편리한 손 씻기를 함께 생각하는 학교 생활 개선 프로젝트.</p>
+    <a class="btn" href="#community">함께 참여하기</a>
+    <div class="links"><a href="#simulation">3D 실험실</a><a href="#problem">공동 모델</a><a href="#community">멤버 공간</a><a href="#experiment">실험 기록</a></div>
+    <p class="fine">2026 호남삼육중학교 이공계 Step-in · 학교 수도꼭지 개선 프로젝트 · 설계 제안 / 실제 성능 검증 예정</p>
+  </div>
+</footer>
+
+<div class="qa-back" id="qaBack" hidden>
+  <div class="qa" role="dialog" aria-modal="true" aria-labelledby="qaTitle">
+    <div class="qa-top"><h3 id="qaTitle">자주 생기는 문제 Q&amp;A</h3><button class="btn sm" id="qaClose" type="button">닫기 (Esc)</button></div>
+    <p class="lead">문제를 눌러 원인과 해결 방법을 확인하세요. 그래도 안 풀리면 화면에 나온 안내 문구(빨간 글씨)와 코드를 함께 알려 주세요.</p>
+    <input class="field" id="qaSearch" type="search" placeholder="증상으로 찾기 (예: 업로드, 까맣게, 삭제, 한글)" aria-label="Q&A 검색">
+    <div id="qaList" style="margin-top:10px"></div>
+    <p class="note" id="qaEmpty" hidden style="margin-top:14px">일치하는 항목이 없어요. 다른 단어로 찾아보세요.</p>
+  </div>
+</div>
+<div class="qa-back" id="lgBack" hidden>
+  <div class="qa" role="dialog" aria-modal="true" aria-labelledby="lgTitle" style="max-width:520px">
+    <div class="qa-top"><h3 id="lgTitle">공동 저장 서버에 연결하지 못했어요</h3></div>
+    <p class="lead" id="lgText" style="font-size:.95rem;line-height:1.7"></p>
+    <ul class="note" style="margin:0 0 4px;padding-left:1.2em;line-height:1.8">
+      <li>모델·자료 공유, 멤버 소통, 실험로그, 공동 수도꼭지 치수</li>
+      <li>연결되지 않아도 3D 시뮬레이션, 계산, 실험 기록 표는 그대로 쓸 수 있어요.</li>
+      <li>지금 쓴 글과 로그는 이 브라우저에만 저장돼요.</li>
+    </ul>
+    <div class="lg-actions">
+      <button class="btn primary" id="lgGo" type="button">새로고침</button>
+      <button class="btn" id="lgSkip" type="button">이 브라우저에서 계속</button>
+    </div>
+    <p class="note" style="margin-top:12px">서버 연결이 돌아오면 새로고침했을 때 공동 저장이 다시 켜져요.</p>
+  </div>
+</div>
+<div class="tut-toast" id="tutToast" hidden>
+  <span>처음 오셨나요? 사용법을 1분 안에 안내해 드려요.</span>
+  <button class="btn sm primary" id="tutToastGo" type="button">튜토리얼 보기</button>
+  <button class="linkbtn" id="tutToastX" type="button">닫기</button>
+</div>
+<div class="tut" id="tut" role="dialog" aria-labelledby="tutTitle" hidden>
+  <div class="tut-top"><span id="tutStep"></span><button class="linkbtn" id="tutClose" type="button">닫기 (Esc)</button></div>
+  <h3 id="tutTitle"></h3>
+  <p id="tutText"></p>
+  <div class="tut-dots" id="tutDots" aria-hidden="true"></div>
+  <div class="tut-act"><button class="btn sm" id="tutPrev" type="button">이전</button><button class="btn sm primary" id="tutNext" type="button">다음</button></div>
+</div>
+
 <script src="/community.js" defer></script>
-<section id="simulation"><div class="eyebrow">VIRTUAL WATER LAB / 3D 설계 검토</div><h2>내 모델을 결합하고,<br>물의 흐름을 살펴보세요.</h2><p>사진을 참고한 벽면 고정형 수도꼭지입니다. 상부 레버·곡선 몸체·금속 연결부와 석재 수조를 반영했습니다. 치수는 실측 전 참고값입니다. STL·OBJ 모델을 수도꼭지 아래에 배치합니다. 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드 모델은 이 브라우저에서만 처리됩니다.</p><div class="sim-toolbar"><button class="button" id="sim-start">3D 시뮬레이션 시작</button><label>모델 업로드 · STL / OBJ · 최대 10MB<input id="sim-file" type="file" accept=".stl,.obj" disabled></label><button id="sim-demo">예제 모델</button><button id="sim-reset">배치 초기화</button><button id="sim-pause">일시정지</button></div><p id="sim-status" role="status">시작 버튼을 누른 후 모델을 올리세요. 드래그로 회전, 휠로 확대할 수 있습니다.</p><div class="sim-layout"><div><div id="sim-view">3D 뷰어 · 수도꼭지와 부착물</div><label><input type="checkbox" id="sim-collision" checked> 모델 표면 충돌 적용 (해제하면 동일 출구 조건의 직선 흐름 비교)</label><div class="sim-results"><div>예상 유량<strong id="sim-flow"></strong></div><div>예상 절수율<strong id="sim-saving"></strong></div><div>예상 절수량<strong id="sim-daily"></strong></div></div></div><div id="sim-controls"></div></div><details open><summary>계산 가정과 한계 — 실제 성능 인증용이 아닙니다</summary><p>물줄기는 중력과 삼각형 표면 충돌을 적용한 입자 경로 시각화입니다. 내부 유동·난류·압력 손실·누수·실제 비산량을 푸는 CFD 해석이 아니며, 입자 이동 속도는 보기 좋게 조정됩니다. 물 튐 수치는 제공하지 않습니다.</p><p>절수량은 업로드 형상에서 자동 판정하지 않습니다. 직접 입력한 <b>유효 출구 지름</b>, <b>압력 차</b>, <b>유량 계수</b>로 Q = Cd × A × √(2ΔP/ρ)를 계산하고 기존 유량을 상한으로 둡니다(ρ = 1000 kg/m³). 기본값은 예시입니다. 구멍이 여러 개면 전체 출구 면적과 같은 면적의 원 지름을 입력하세요. 실제 모델의 개구부와 치수, 배치 및 기존 유량을 측정해 보정해야 합니다.</p><p>모델은 최대 길이에 맞춰 자동 축척됩니다. 원본 단위는 자동 인식하지 않으므로 실제 길이를 입력하세요. 복잡한 모델은 8만 삼각형 이하로 단순화해 주세요. 3D 엔진 로딩에는 인터넷 연결이 필요합니다.</p></details></section><section class="hero"><div><div class="eyebrow"><span class="dot"></span> SCHOOL WATER PROJECT / 2026</div><h1>물은 아끼고,<br>옷은 <em>보송하게.</em></h1><p>매일 사용하는 학교 수도꼭지.<br>작은 불편을 발견하고, 더 나은 물 사용을 설계합니다.</p><div class="actions"><a class="button" href="#design">산출물 아이디어 보기 ↗</a><a class="textlink" href="#experiment">실험 기록하기 ↓</a></div><p class="note">학생 탐구 프로젝트 · 설계 제안 및 검증 단계</p></div><div class="visual"><span class="tag">CONCEPT 01 — FLOW GUARD</span><svg viewBox="0 0 540 460" role="img" aria-label="유량 조절 노즐과 물 튐 방지 가이드를 결합한 수도꼭지 설계 개념도"><defs><linearGradient id="metal"><stop stop-color="#84988f"/><stop offset=".45" stop-color="#ecf1e8"/><stop offset=".7" stop-color="#b1c0b5"/><stop offset="1" stop-color="#6d8479"/></linearGradient><linearGradient id="water" x2="0" y2="1"><stop stop-color="#84c9c5" stop-opacity=".9"/><stop offset="1" stop-color="#c2e7db" stop-opacity=".1"/></linearGradient><pattern id="grid" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="#a8bda2" stroke-width=".5" opacity=".3"/></pattern></defs><rect width="540" height="460" fill="url(#grid)"/><ellipse cx="281" cy="388" rx="188" ry="25" fill="#b6c8af" opacity=".5"/><path d="M65 334 Q260 380 480 333 L455 379 Q265 424 87 376Z" fill="#f3f5e9"/><path d="M68 334Q270 371 480 333" fill="none" stroke="#9aaf9d" stroke-width="5"/><path d="M142 330V145Q142 102 186 102H283Q324 102 324 145V177" fill="none" stroke="#748f80" stroke-width="49"/><path d="M142 330V145Q142 102 186 102H283Q324 102 324 145V177" fill="none" stroke="url(#metal)" stroke-width="40"/><rect x="116" y="318" width="52" height="15" rx="5" fill="#839c89"/><path d="M185 99L211 75H251" fill="none" stroke="#7e9785" stroke-width="12" stroke-linecap="round"/><rect x="297" y="167" width="54" height="42" rx="9" fill="#235c46"/><rect x="301" y="199" width="46" height="8" rx="3" fill="#cde998"/><path d="M305 212L295 323H350L342 212Z" fill="url(#water)"/><path d="M311 215L307 307M322 215V319M333 215L338 308" stroke="#82bcb1" stroke-width="2" stroke-dasharray="4 6"/><path d="M255 289Q277 329 378 294L386 332Q297 361 257 328Z" fill="#a6c9a5" fill-opacity=".75" stroke="#789d75" stroke-width="2"/><path d="M351 184H401L426 157" fill="none" stroke="#668466"/><text x="383" y="143" font-size="12" fill="#315740">유량 조절 노즐</text><path d="M377 310H416L435 279" fill="none" stroke="#668466"/><text x="379" y="266" font-size="12" fill="#315740">물 튐 방지 가이드</text><circle cx="351" cy="184" r="3" fill="#315740"/><circle cx="377" cy="310" r="3" fill="#315740"/></svg><span class="caption">개념 이미지 · 실제 제작 형태는 실험 후 결정</span></div></section>
-<div class="band"><div><strong>01 / 절수</strong><span>필요한 만큼 흐르는 물</span></div><div><strong>02 / 물 튐</strong><span>옷으로 향하는 물방울 줄이기</span></div><div><strong>03 / 검증</strong><span>같은 조건에서 전후 비교</span></div></div>
-<section class="hub" id="community"><div class="eyebrow">TEAM SPACE / 함께 만드는 프로젝트</div><h2>아이디어를 나누고,<br>결과를 함께 쌓아요.</h2><p>ChatGPT 로그인 없이 닉네임으로 참여하세요. 링크를 가진 누구나 글과 파일을 볼 수 있는 공개 공간입니다.</p><div class="hubnav" role="group" aria-label="게시판 선택"><button data-tab="chat" class="active">💬 멤버 소통</button><button data-tab="proposal">💡 산출물 제안</button><button data-tab="result">📁 산출물 결과</button></div><div class="hubgrid"><form id="postform"><label>닉네임<input id="nickname" required maxlength="30" placeholder="사용할 닉네임"></label><label id="titlelabel" hidden>제목<input id="posttitle" maxlength="100" placeholder="아이디어 또는 결과물 제목"></label><label><span id="bodylabel">메시지</span><textarea id="postbody" required maxlength="4000" placeholder="멤버들과 의견을 나눠 보세요."></textarea></label><label id="filelabel" hidden>첨부파일 (최대 50MB, 1개)<input id="postfile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,.docx,.pptx,.xlsx,.hwp,.hwpx,.txt,.csv,.zip"></label><button class="button" id="sendpost">메시지 보내기 ↗</button><p class="hubstatus" id="hubstatus" role="status"></p><p class="note">닉네임은 본인 인증이 아닙니다. 개인정보를 올리지 마세요.<br>내가 작성한 글은 같은 브라우저에서 삭제할 수 있습니다.</p></form><div><div style="display:flex;justify-content:space-between;align-items:center"><h3 id="feedtitle">멤버 소통</h3><button class="textlink" id="reload" type="button">새로고침 ↻</button></div><p class="note">최근 100개 표시 · 5초마다 자동 확인</p><div class="feed" id="feed" aria-live="polite"></div></div></div></section>
-<div class="solution" id="design"><div><div class="eyebrow">02 — DESIGN PROPOSAL</div><h2>작은 부착물로 만드는<br>새로운 물의 흐름.</h2><p>‘FLOW GUARD’는 유량 조절 노즐과 탈착식 물 튐 방지 가이드를 결합한 산출물 제안입니다. 효과는 제작 후 비교 실험으로 확인합니다.</p><div class="parts"><span>수도꼭지 부착형</span><span>분리 세척 구조</span><span>교체 가능한 시제품</span></div></div><div><div class="detail"><b>01</b> 유량 조절 노즐<p>과도한 유량을 줄이되 손 씻기에 필요한 흐름을 확보하도록 설계합니다.</p></div><div class="detail"><b>02</b> 물 튐 방지 가이드<p>사용자 방향으로 튀는 물을 막고 세면대 안쪽으로 흘려보내는 형태를 시험합니다.</p></div><div class="detail"><b>03</b> 탈착식 결합부<p>학교 수도꼭지의 치수에 맞추고, 흔들림과 누수 및 세척 편의성을 확인합니다.</p></div></div></div>
-<section id="process"><div class="eyebrow">03 — MAKE & IMPROVE</div><h2>관찰하고, 만들고, 다시 개선하기.</h2><div class="steps"><article><span class="num">STEP 01</span><h3>현장 관찰</h3><p>수도꼭지와 세면대 치수, 기존 유량, 옷이 젖는 위치를 기록합니다.</p></article><article><span class="num">STEP 02</span><h3>시제품 제작</h3><p>모서리가 둥근 방수 재료로 가이드 형태를 만들고 탈착 구조를 점검합니다.</p></article><article><span class="num">STEP 03</span><h3>비교 실험</h3><p>같은 개방 정도·시간·손 위치에서 장착 전후를 각각 3회 이상 측정합니다.</p></article><article><span class="num">STEP 04</span><h3>설계 개선</h3><p>절수율과 물 튐, 세척 편의성을 함께 평가해 각도와 형태를 수정합니다.</p></article></div><p class="note">설치는 학교 담당자의 허가 후 진행하고, 수도꼭지 원형을 훼손하지 않는 방식을 사용합니다.</p></section>
-<section id="calculator" style="padding-top:0"><div class="calc"><div><div class="eyebrow">04 — WATER IMPACT</div><h2>우리 학교에서는<br>얼마나 아낄 수 있을까요?</h2><p>측정한 유량을 입력해 예상 절수량을 계산하세요. 초기값은 계산 방법을 보여주기 위한 예시이며, 실제 성능을 뜻하지 않습니다.</p><p class="note">절수량 = (기존 유량 − 개선 유량) × 1회 사용 시간 ÷ 60 × 하루 사용 횟수<br>아래 값은 손 씻는 시간이 동일하다는 조건의 추정치입니다.</p></div><div><div class="fields"><label>기존 유량 (L/분)<input id="before" type="number" min="0" step="0.1" value="6"></label><label>개선 유량 (L/분)<input id="after" type="number" min="0" step="0.1" value="4"></label><label>1회 사용 시간 (초)<input id="seconds" type="number" min="0" value="20"></label><label>하루 사용 횟수 (회)<input id="uses" type="number" min="0" value="100"></label></div><div class="result" aria-live="polite"><div>하루 예상 절수량</div><strong id="saving">66.7</strong> <span>L / 일</span><p id="rate">기존 대비 33.3% 절감 · 입력한 예시 조건 기준</p></div></div></div></section>
-<section id="experiment" style="padding-top:0"><div class="sectionhead"><div><div class="eyebrow">05 — TEST LOG</div><h2>좋은 아이디어는,<br>측정으로 증명합니다.</h2></div><p>같은 시간 동안 받은 물의 양과 사용자 위치에 둔 흡수지의 젖은 면적을 기록하세요. 이 브라우저에 자동 저장됩니다.</p></div><div class="tablewrap"><table><thead><tr><th>회차</th><th>기존 물 사용량 (mL)</th><th>개선 물 사용량 (mL)</th><th>기존 젖은 면적 (cm²)</th><th>개선 젖은 면적 (cm²)</th></tr></thead><tbody id="records"></tbody></table></div><div class="recordactions"><button class="button" id="download">실험 기록 CSV 내려받기 ↓</button><p id="recordstatus" class="status" aria-live="polite">아직 측정값이 없습니다.</p></div><p class="note">실험 조건: 측정 시간, 수도 개방 정도, 손의 위치, 흡수지 위치·크기를 일정하게 유지하세요. 기록은 기기 간 공유되지 않습니다.</p></section>
-<div class="end"><div><div class="eyebrow">SMALL STEP, BETTER SCHOOL.</div><h2>매일 쓰는 물, 더 나은 방향으로.</h2><p>물 절약과 편리한 손 씻기를 함께 생각하는 학교 생활 개선 프로젝트.</p></div><a href="#design" class="button">설계 다시 살펴보기 ↑</a></div>
-<footer><a href="#" class="brand">HOS STEP IN <span>2026</span></a><span>학교 수도꼭지 개선 프로젝트 · 설계 제안 / 실제 성능 검증 예정</span></footer></main><script src="/app.js" defer></script><script src="/simulation.js" defer></script></body></html>
-
+<script src="/app.js" defer></script>
+</body>
+</html>
