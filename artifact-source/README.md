@@ -6,4 +6,6 @@ claude.ai Artifact `2ydAQYSzkPAL1JK2ytVrMC` (버전 `1794354359-9ac9`)에 게시
 - 외부 의존성: three.js r128 (cdnjs), Google Fonts (Black Han Sans, IBM Plex Sans KR).
 - 공동 저장(모델·메시지·실험로그)은 Artifact 런타임의 `window.claude` 기능(db, assets, downloads, user)을 사용하므로, 이 파일을 다른 곳에서 열면 브라우저 로컬 저장 모드로만 동작합니다.
 
+변경 사항: 원본에서는 내가 올린 메시지·실험로그만 삭제할 수 있었지만, 이 복사본은 누구나 삭제할 수 있도록 고쳤습니다(관련 안내 문구 포함).
+
 이 폴더는 참고용 원본이며, 사이트 소스는 저장소 루트의 `index.html`, `styles.css`, `app.js` 등입니다.
