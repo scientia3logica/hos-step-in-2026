@@ -56,6 +56,8 @@ function delControl(key,onDelete,rerender,cls){
   b.addEventListener('click',function(){CONF[key]=true;rerender()});
   return b;
 }
+/* Standalone site: every visitor can delete messages and experiment logs (models already work this way). */
+var ANYONE_DELETES=true;
 function errCode(er){return er&&er.code?' ('+er.code+')':''}
 var MINE=lsGet('hos.mine',{msgs:[],nick:'',author:''});MINE.logs=MINE.logs||[];
 function saveMine(){lsSet('hos.mine',MINE)}
@@ -105,7 +107,7 @@ function renderFeed(){
   var list=MSGS.filter(function(m){return (m.ch||'talk')===CH}).slice(0,100);
   if(!list.length){feed.append(h('div',{class:'empty',text:'아직 글이 없어요. 첫 메시지를 남겨 보세요.'}));return}
   list.forEach(function(m){
-    var mine=MINE.msgs.indexOf(m.id)>-1||S.admin;
+    var mine=ANYONE_DELETES||MINE.msgs.indexOf(m.id)>-1||S.admin;
     var head=h('header',{},h('b',{text:m.nick||'익명'}),h('span',{text:fmtTime(m.createdAt)}));
     if(mine){var ctl=delControl('msg:'+m.id,function(){deleteMsg(m.id)},renderFeed);ctl.classList.add('x');head.append(ctl)}
     feed.append(h('div',{class:'bubble'},head,h('p',{text:m.text||''})));
@@ -1250,7 +1252,7 @@ function renderLogs(){
   $('#lgCount').textContent=LOGS.length?LOGS.length+'건':'';
   if(!LOGS.length){box.append(h('div',{class:'empty',text:'아직 실험로그가 없어요. 첫 실험을 기록해 보세요.'}))}
   LOGS.slice(0,100).forEach(function(e){
-    var mine=MINE.logs.indexOf(e.id)>-1||S.admin,url=e.url||(e.imageId?'/_blob/'+e.imageId:'');
+    var mine=ANYONE_DELETES||MINE.logs.indexOf(e.id)>-1||S.admin,url=e.url||(e.imageId?'/_blob/'+e.imageId:'');
     var meta=h('div',{class:'logmeta'},h('span',{},'실험 ',h('b',{text:e.expDate||'-'})),h('span',{text:'게시 '+postedStr(e.createdAt)}),h('span',{text:e.author||'익명'}));
     var badge=S.mode==='shared'?h('span',{class:'badge ok',text:'✓ 파일에 기록됨'}):null;
     var head=h('header',{style:'justify-content:space-between;align-items:center'},meta,badge);
@@ -1328,8 +1330,8 @@ renderLogs();
       c:['실시간 연결이 잠깐 늦어졌어요.','일시적인 네트워크 문제예요.'],
       f:['몇 초 기다리면 자동으로 다시 불러와요. (6초마다 확인)','목록 위에 빨간 안내가 있으면 괄호 안 코드를 확인하세요.','그래도 안 되면 새로고침하세요.']},
     {t:'공유',q:'삭제가 안 돼요',
-      c:['내가 올린 글에만 삭제 버튼이 보여요. (같은 브라우저에서만 내 글로 인식해요)','브라우저 데이터를 지웠거나, 다른 기기·시크릿 창에서 열었어요.','“삭제”를 누른 뒤 “정말 삭제”를 한 번 더 눌러야 해요.','쓰기 권한이 없어요.'],
-      f:['글을 올렸던 같은 브라우저에서 시도하세요.','다른 사람이 쓴 글과 실험로그는 삭제할 수 없어요. (공유 모델은 누구나 삭제할 수 있어요)','“삭제” 다음에 나오는 빨간 “정말 삭제”를 누르세요.','실패하면 “삭제하지 못했어요 (코드)” 문구의 코드를 알려 주세요.']},
+      c:['“삭제”를 누른 뒤 “정말 삭제”를 한 번 더 눌러야 해요.','다른 사람이 먼저 지워서 이미 없어진 글이에요.','공동 저장 서버에 잠시 연결되지 않았어요.'],
+      f:['메시지·실험로그·공유 모델은 누구나 삭제할 수 있어요. 지우기 전에 한 번 더 확인하세요.','“삭제” 다음에 나오는 빨간 “정말 삭제”를 누르세요.','몇 초 기다리면 목록이 다시 불러와져요. 그래도 안 되면 새로고침하세요.','실패하면 “삭제하지 못했어요 (코드)” 문구의 코드를 알려 주세요.']},
     {t:'내려받기',q:'TXT·CSV·PDF·DOCX가 저장되지 않아요',
       c:['저장 허용 창에서 취소를 눌렀어요.','브라우저가 다운로드를 막고 있어요.','공동 저장이 꺼진 보기에서는 파일 저장 기능이 없어요.','아직 기록이 한 건도 없어요.'],
       f:['저장 창에서 “허용/저장”을 누르세요.','브라우저의 다운로드·팝업 차단을 해제하세요.','“파일 내용 보기”에서 내용을 복사해 쓰세요.','PDF는 이미지를 포함하느라 몇 초 걸릴 수 있어요.']},

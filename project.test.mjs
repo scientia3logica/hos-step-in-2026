@@ -43,8 +43,8 @@ test('standalone shared storage: collections, delete keys, dimensions and blobs 
  assert.equal((await call('/api/db/messages',{headers:{'If-None-Match':r.headers.get('ETag')}})).status,200,'different limit, different tag');
  assert.equal((await call('/api/db/messages?limit=100',{headers:{'If-None-Match':r.headers.get('ETag')}})).status,304);
  assert.equal((await post('messages',{ch:'talk',nick:'',text:'x'})).status,400);
- assert.equal((await call('/api/db/messages/'+m.id,{method:'DELETE',headers:{'X-Delete-Key':'nope'}})).status,403);
- assert.equal((await call('/api/db/messages/'+m.id,{method:'DELETE',headers:{'X-Delete-Key':m.deleteKey}})).status,200);
+ assert.equal((await call('/api/db/messages/'+m.id,{method:'DELETE'})).status,200,'anyone can delete a message');
+ assert.equal((await call('/api/db/messages/'+m.id,{method:'DELETE'})).status,404);
  // concurrent writers do not lose items
  await Promise.all(Array.from({length:8},(_,i)=>post('messages',{ch:'talk',nick:'n'+i,text:'t'+i})));
  assert.equal((await (await call('/api/db/messages')).json()).length,9);
@@ -55,9 +55,9 @@ test('standalone shared storage: collections, delete keys, dimensions and blobs 
  assert.equal((await post('models',{author:'a',fileName:'x.stl',assetId:'bmissing000000'})).status,400);
  assert.equal((await call('/api/db/models/'+model.id,{method:'DELETE'})).status,200);
  assert.equal((await call('/_blob/'+blob)).status,404);
- // experiment logs require the author's key
+ // anyone can delete experiment logs
  r=await post('explogs',{expDate:'2026-11-11',author:'a',body:'실험'});const log=await r.json();
- assert.equal((await call('/api/db/explogs/'+log.id,{method:'DELETE'})).status,403);
+ assert.equal((await call('/api/db/explogs/'+log.id,{method:'DELETE'})).status,200,'anyone can delete an experiment log');
  // dimensions
  assert.deepEqual(await (await call('/api/db/lab/dimensions')).json(),{data:null});
  assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:1,height:110,od:20})})).status,400);
