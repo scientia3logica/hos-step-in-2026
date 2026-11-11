@@ -1041,11 +1041,11 @@ function loop(t){
     {t:'5. 결과 읽기',x:'기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
     {t:'6. 내 모델·자료 공유',x:'작성자와 파일을 고르고 “모델 공유하기”를 누르면 모두가 볼 수 있어요. STL·OBJ는 “시뮬레이터에 불러오기”로 바로 확인할 수 있어요.',sel:'#problem .grid2 > .panel:first-child'},
     {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
-    {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 내가 쓴 글은 같은 브라우저에서 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
+    {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 올라온 글은 누구나 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
     {t:'9. 실험로그 올리기',x:'“실험로그” 탭에서 실험 일자를 고르고, 작성자와 실험 내용을 적어요. 한 번에 실험 하나씩 기록하세요. 게시 일자와 시간은 올리는 순간 자동으로 남아요.',sel:'#lgDate',up:'.stack',pre:function(){document.getElementById('tab-log').click()}},
     {t:'10. 모델 이미지 첨부',x:'실험한 모델의 사진이나 캡처를 20MB 이하로 첨부하면 로그 목록에 미리보기로 보여요. 실험로그 파일에는 그림 대신 이미지 파일 이름이 기록돼요.',sel:'#lgImg',pre:function(){document.getElementById('tab-log').click()}},
     {t:'11. 실험로그 파일 (실시간 기록)',x:'누가 실험로그를 올리든 실험로그 파일에 바로 추가돼요. 상태 줄에서 총 건수와 마지막 기록 시각을 확인하고, “파일 내용 보기”로 열어 보거나 TXT·CSV로 내려받을 수 있어요.',sel:'#logSync',up:'.syncbox',pre:function(){document.getElementById('tab-log').click()}},
-    {t:'12. 기록 확인과 삭제',x:'각 로그에 “✓ 파일에 기록됨” 표시가 붙어요. 내가 올린 로그는 같은 브라우저에서 삭제할 수 있고(“삭제” 후 “정말 삭제”), 삭제하면 실험로그 파일에서도 빠져요. PDF·DOCX로도 내려받을 수 있어요.',sel:'#lgFeed',pre:function(){document.getElementById('tab-log').click()}},
+    {t:'12. 기록 확인과 삭제',x:'각 로그에 “✓ 파일에 기록됨” 표시가 붙어요. 올라온 로그는 누구나 삭제할 수 있고(“삭제” 후 “정말 삭제”), 삭제하면 실험로그 파일에서도 빠져요. PDF·DOCX로도 내려받을 수 있어요.',sel:'#lgFeed',pre:function(){document.getElementById('tab-log').click()}},
     {t:'13. 예상 절수량 계산',x:'기존·개선 유량, 사용 시간, 하루 사용 횟수를 넣으면 하루에 아끼는 물의 양을 계산해 줘요.',sel:'#impact .panel'},
     {t:'14. 실험 기록 표',x:'“측정 추가”로 회차를 늘리고 물 사용량과 젖은 면적을 적으세요. 감소율이 자동 계산되고, CSV로 내려받을 수 있어요.',sel:'#lAdd',up:'.log-actions'},
     {t:'15. 문제가 생기면 Q&A',x:'업로드·삭제·내려받기·3D 화면 등 자주 생기는 문제는 상단 “Q&A” 버튼에서 원인과 해결 방법을 찾아볼 수 있어요.',sel:'#qaBtn'}

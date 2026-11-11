@@ -550,7 +550,7 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
             <button class="btn primary" id="cSend">메시지 보내기</button>
             <span class="note" id="cNote" aria-live="polite"></span>
           </div>
-          <p class="note">닉네임은 본인 인증이 아닙니다. 개인정보를 올리지 마세요. 내가 작성한 글은 같은 브라우저에서 삭제할 수 있습니다.</p>
+          <p class="note">닉네임은 본인 인증이 아닙니다. 개인정보를 올리지 마세요. 올라온 글은 누구나 삭제할 수 있으니 지우기 전에 한 번 더 확인해 주세요.</p>
         </div>
         <div>
           <div style="display:flex;align-items:center;justify-content:space-between">
@@ -586,7 +586,7 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
               <button class="btn primary" id="lgBtn" type="button">실험로그 올리기</button>
               <span class="note" id="lgNote" aria-live="polite"></span>
             </div>
-            <p class="note">모두가 볼 수 있는 공개 공간이에요. 개인정보를 올리지 마세요. 올린 로그는 누구에게나 보이고 실험로그 파일에 바로 기록돼요. 내가 올린 로그는 같은 브라우저에서 삭제할 수 있고, 삭제하면 파일에서도 빠져요.</p>
+            <p class="note">모두가 볼 수 있는 공개 공간이에요. 개인정보를 올리지 마세요. 올린 로그는 누구에게나 보이고 실험로그 파일에 바로 기록돼요. 올라온 로그는 누구나 삭제할 수 있고, 삭제하면 파일에서도 빠져요.</p>
           </div>
           <div>
             <div style="display:flex;align-items:center;justify-content:space-between"><h3>실험로그</h3><span class="note" id="lgCount"></span></div>
@@ -758,6 +758,8 @@ function delControl(key,onDelete,rerender,cls){
   b.addEventListener('click',function(){CONF[key]=true;rerender()});
   return b;
 }
+/* Every visitor can delete messages and experiment logs (models already work this way). */
+var ANYONE_DELETES=true;
 function errCode(er){return er&&er.code?' ('+er.code+')':''}
 var MINE=lsGet('hos.mine',{msgs:[],nick:'',author:''});MINE.logs=MINE.logs||[];
 function saveMine(){lsSet('hos.mine',MINE)}
@@ -807,7 +809,7 @@ function renderFeed(){
   var list=MSGS.filter(function(m){return (m.ch||'talk')===CH}).slice(0,100);
   if(!list.length){feed.append(h('div',{class:'empty',text:'아직 글이 없어요. 첫 메시지를 남겨 보세요.'}));return}
   list.forEach(function(m){
-    var mine=MINE.msgs.indexOf(m.id)>-1||S.admin;
+    var mine=ANYONE_DELETES||MINE.msgs.indexOf(m.id)>-1||S.admin;
     var head=h('header',{},h('b',{text:m.nick||'익명'}),h('span',{text:fmtTime(m.createdAt)}));
     if(mine){var ctl=delControl('msg:'+m.id,function(){deleteMsg(m.id)},renderFeed);ctl.classList.add('x');head.append(ctl)}
     feed.append(h('div',{class:'bubble'},head,h('p',{text:m.text||''})));
@@ -1741,11 +1743,11 @@ function loop(t){
     {t:'5. 결과 읽기',x:'기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
     {t:'6. 내 모델·자료 공유',x:'작성자와 파일을 고르고 “모델 공유하기”를 누르면 모두가 볼 수 있어요. STL·OBJ는 “시뮬레이터에 불러오기”로 바로 확인할 수 있어요.',sel:'#problem .grid2 > .panel:first-child'},
     {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
-    {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 내가 쓴 글은 같은 브라우저에서 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
+    {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 올라온 글은 누구나 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
     {t:'9. 실험로그 올리기',x:'“실험로그” 탭에서 실험 일자를 고르고, 작성자와 실험 내용을 적어요. 한 번에 실험 하나씩 기록하세요. 게시 일자와 시간은 올리는 순간 자동으로 남아요.',sel:'#lgDate',up:'.stack',pre:function(){document.getElementById('tab-log').click()}},
     {t:'10. 모델 이미지 첨부',x:'실험한 모델의 사진이나 캡처를 20MB 이하로 첨부하면 로그 목록에 미리보기로 보여요. 실험로그 파일에는 그림 대신 이미지 파일 이름이 기록돼요.',sel:'#lgImg',pre:function(){document.getElementById('tab-log').click()}},
     {t:'11. 실험로그 파일 (실시간 기록)',x:'누가 실험로그를 올리든 실험로그 파일에 바로 추가돼요. 상태 줄에서 총 건수와 마지막 기록 시각을 확인하고, “파일 내용 보기”로 열어 보거나 TXT·CSV로 내려받을 수 있어요.',sel:'#logSync',up:'.syncbox',pre:function(){document.getElementById('tab-log').click()}},
-    {t:'12. 기록 확인과 삭제',x:'각 로그에 “✓ 파일에 기록됨” 표시가 붙어요. 내가 올린 로그는 같은 브라우저에서 삭제할 수 있고(“삭제” 후 “정말 삭제”), 삭제하면 실험로그 파일에서도 빠져요. PDF·DOCX로도 내려받을 수 있어요.',sel:'#lgFeed',pre:function(){document.getElementById('tab-log').click()}},
+    {t:'12. 기록 확인과 삭제',x:'각 로그에 “✓ 파일에 기록됨” 표시가 붙어요. 올라온 로그는 누구나 삭제할 수 있고(“삭제” 후 “정말 삭제”), 삭제하면 실험로그 파일에서도 빠져요. PDF·DOCX로도 내려받을 수 있어요.',sel:'#lgFeed',pre:function(){document.getElementById('tab-log').click()}},
     {t:'13. 예상 절수량 계산',x:'기존·개선 유량, 사용 시간, 하루 사용 횟수를 넣으면 하루에 아끼는 물의 양을 계산해 줘요.',sel:'#impact .panel'},
     {t:'14. 실험 기록 표',x:'“측정 추가”로 회차를 늘리고 물 사용량과 젖은 면적을 적으세요. 감소율이 자동 계산되고, CSV로 내려받을 수 있어요.',sel:'#lAdd',up:'.log-actions'},
     {t:'15. 문제가 생기면 Q&A',x:'업로드·삭제·내려받기·3D 화면 등 자주 생기는 문제는 상단 “Q&A” 버튼에서 원인과 해결 방법을 찾아볼 수 있어요.',sel:'#qaBtn'}
@@ -1952,7 +1954,7 @@ function renderLogs(){
   $('#lgCount').textContent=LOGS.length?LOGS.length+'건':'';
   if(!LOGS.length){box.append(h('div',{class:'empty',text:'아직 실험로그가 없어요. 첫 실험을 기록해 보세요.'}))}
   LOGS.slice(0,100).forEach(function(e){
-    var mine=MINE.logs.indexOf(e.id)>-1||S.admin,url=e.url||(e.imageId?'/_blob/'+e.imageId:'');
+    var mine=ANYONE_DELETES||MINE.logs.indexOf(e.id)>-1||S.admin,url=e.url||(e.imageId?'/_blob/'+e.imageId:'');
     var meta=h('div',{class:'logmeta'},h('span',{},'실험 ',h('b',{text:e.expDate||'-'})),h('span',{text:'게시 '+postedStr(e.createdAt)}),h('span',{text:e.author||'익명'}));
     var badge=S.mode==='shared'?h('span',{class:'badge ok',text:'✓ 파일에 기록됨'}):null;
     var head=h('header',{style:'justify-content:space-between;align-items:center'},meta,badge);
@@ -2030,8 +2032,8 @@ renderLogs();
       c:['실시간 연결이 잠깐 늦어졌어요.','일시적인 네트워크 문제예요.'],
       f:['몇 초 기다리면 자동으로 다시 불러와요. (6초마다 확인)','목록 위에 빨간 안내가 있으면 괄호 안 코드를 확인하세요.','그래도 안 되면 새로고침하세요.']},
     {t:'공유',q:'삭제가 안 돼요',
-      c:['내가 올린 글에만 삭제 버튼이 보여요. (같은 브라우저에서만 내 글로 인식해요)','브라우저 데이터를 지웠거나, 다른 기기·시크릿 창에서 열었어요.','“삭제”를 누른 뒤 “정말 삭제”를 한 번 더 눌러야 해요.','쓰기 권한이 없어요.'],
-      f:['글을 올렸던 같은 브라우저에서 시도하세요.','사이트 주인과 편집 권한이 있는 사람은 모든 글을 삭제할 수 있어요.','“삭제” 다음에 나오는 빨간 “정말 삭제”를 누르세요.','실패하면 “삭제하지 못했어요 (코드)” 문구의 코드를 알려 주세요.']},
+      c:['“삭제”를 누른 뒤 “정말 삭제”를 한 번 더 눌러야 해요.','다른 사람이 먼저 지워서 이미 없어진 글이에요.','쓰기 권한이 없어요.'],
+      f:['메시지·실험로그·공유 모델은 누구나 삭제할 수 있어요. 지우기 전에 한 번 더 확인하세요.','“삭제” 다음에 나오는 빨간 “정말 삭제”를 누르세요.','상단 상태 문구가 “읽기 전용”이면 사이트 주인에게 편집 권한을 요청하세요.','실패하면 “삭제하지 못했어요 (코드)” 문구의 코드를 알려 주세요.']},
     {t:'내려받기',q:'TXT·CSV·PDF·DOCX가 저장되지 않아요',
       c:['저장 허용 창에서 취소를 눌렀어요.','브라우저가 다운로드를 막고 있어요.','공동 저장이 꺼진 보기에서는 파일 저장 기능이 없어요.','아직 기록이 한 건도 없어요.'],
       f:['저장 창에서 “허용/저장”을 누르세요.','브라우저의 다운로드·팝업 차단을 해제하세요.','“파일 내용 보기”에서 내용을 복사해 쓰세요.','PDF는 이미지를 포함하느라 몇 초 걸릴 수 있어요.']},
