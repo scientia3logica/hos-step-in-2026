@@ -306,13 +306,13 @@ function renderSum(){
       h('small',{text:o==null||n==null?'기존·개선 값을 모두 입력하면 계산돼요':'평균 '+o.toFixed(1)+' → '+n.toFixed(1)})));
   }
   card('물 사용량 감소율',avg('a'),avg('b'));
-  card('젖은 면적 감소율',avg('c'),avg('d'));
+  card('젖은 부피 감소율',avg('c'),avg('d'));
 }
 $('#lAdd').addEventListener('click',function(){LOG.push({a:null,b:null,c:null,d:null});saveLog();renderLog()});
 $('#lCsv').addEventListener('click',function(){
   var note=$('#lNote');
   if(!LOG.length){setNote(note,'내려받을 측정값이 아직 없어요.',true);return}
-  var rows=[['회차','기존 물 사용량(mL)','개선 물 사용량(mL)','기존 젖은 면적(cm²)','개선 젖은 면적(cm²)']];
+  var rows=[['회차','기존 물 사용량(mL)','개선 물 사용량(mL)','기존 젖은 부피(L)','개선 젖은 부피(L)']];
   LOG.forEach(function(r,i){rows.push([i+1].concat(COLS.map(function(c){return r[c]==null?'':r[c]})))});
   var csv='\ufeff'+rows.map(function(r){return r.join(',')}).join('\r\n');
   if(!S.dl){setNote(note,'이 보기에서는 파일 저장을 쓸 수 없어요. 표를 복사해 사용해 주세요.',true);return}
@@ -1047,7 +1047,7 @@ function loop(t){
     {t:'11. 실험로그 파일 (실시간 기록)',x:'누가 실험로그를 올리든 실험로그 파일에 바로 추가돼요. 상태 줄에서 총 건수와 마지막 기록 시각을 확인하고, “파일 내용 보기”로 열어 보거나 TXT·CSV로 내려받을 수 있어요.',sel:'#logSync',up:'.syncbox',pre:function(){document.getElementById('tab-log').click()}},
     {t:'12. 기록 확인과 삭제',x:'각 로그에 “✓ 파일에 기록됨” 표시가 붙어요. 올라온 로그는 누구나 삭제할 수 있고(“삭제” 후 “정말 삭제”), 삭제하면 실험로그 파일에서도 빠져요. PDF·DOCX로도 내려받을 수 있어요.',sel:'#lgFeed',pre:function(){document.getElementById('tab-log').click()}},
     {t:'13. 예상 절수량 계산',x:'기존·개선 유량, 사용 시간, 하루 사용 횟수를 넣으면 하루에 아끼는 물의 양을 계산해 줘요.',sel:'#impact .panel'},
-    {t:'14. 실험 기록 표',x:'“측정 추가”로 회차를 늘리고 물 사용량과 젖은 면적을 적으세요. 감소율이 자동 계산되고, CSV로 내려받을 수 있어요.',sel:'#lAdd',up:'.log-actions'},
+    {t:'14. 실험 기록 표',x:'“측정 추가”로 회차를 늘리고 물 사용량과 젖은 부피를 적으세요. 감소율이 자동 계산되고, CSV로 내려받을 수 있어요.',sel:'#lAdd',up:'.log-actions'},
     {t:'15. 문제가 생기면 Q&A',x:'업로드·삭제·내려받기·3D 화면 등 자주 생기는 문제는 상단 “Q&A” 버튼에서 원인과 해결 방법을 찾아볼 수 있어요.',sel:'#qaBtn'}
   ];
   var i=0,open=false,hl=null,$t=function(s){return document.querySelector(s)};
