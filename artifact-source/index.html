@@ -315,6 +315,21 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
 .pct output{font-family:var(--display);font-size:1.15rem;min-width:3.2em;text-align:right}
 .pct small{grid-column:1/-1;font-size:.8rem;color:var(--muted);margin-top:-6px}
 .lg-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+/* ---- v24: model move pad ---- */
+.movepad{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.mp-head{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;margin-bottom:10px}
+.mp-head .note{font-variant-numeric:tabular-nums}
+.mp-body{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:stretch}
+.pad{position:relative;min-height:160px;border-radius:12px;border:1.5px dashed var(--line);touch-action:none;cursor:grab;display:grid;place-items:center;color:var(--muted);font-size:.82rem;user-select:none;-webkit-user-select:none;
+  background:repeating-linear-gradient(0deg,transparent 0 23px,color-mix(in srgb,var(--line) 60%,transparent) 23px 24px),repeating-linear-gradient(90deg,transparent 0 23px,color-mix(in srgb,var(--line) 60%,transparent) 23px 24px),var(--bg)}
+.pad>span{position:absolute;left:0;right:0;bottom:8px;text-align:center;pointer-events:none}
+.pad:active{cursor:grabbing}
+.pad[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.pad.locked{opacity:1;border-style:solid;border-color:var(--signal)}
+.pad-dot{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--signal);border:2px solid var(--ink);pointer-events:none}
+.mp-side{display:flex;flex-direction:column;gap:8px}
+#padLock[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:none}
+@media (max-width:420px){.mp-body{grid-template-columns:1fr}.mp-side{flex-direction:row;flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -406,6 +421,19 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
         <div class="vol" id="volBox">
           <div><span class="vl">누적 물 사용량</span><b id="volVal">0 mL</b></div>
           <div class="vs"><span id="volTime">경과 0.0초</span><span id="volRate">현재 유량 –</span><span id="volCup"></span></div>
+        </div>
+        <div class="movepad" id="movePad">
+          <div class="mp-head"><b>모델 이동 패드</b><span class="note" id="padRead">모델을 배치하면 움직일 수 있어요.</span></div>
+          <div class="mp-body">
+            <div class="pad" id="pad" tabindex="0" role="application" aria-label="모델 이동 패드. 드래그하거나 방향키로 모델을 앞뒤·좌우로 옮겨요." aria-disabled="true"><span>여기를 드래그해서 이동</span><i class="pad-dot" id="padDot" aria-hidden="true"></i></div>
+            <div class="mp-side">
+              <button class="btn sm" id="padUp" type="button" disabled>▲ 위로</button>
+              <button class="btn sm" id="padDown" type="button" disabled>▼ 아래로</button>
+              <button class="btn sm" id="padCenter" type="button" disabled>가운데로</button>
+              <button class="btn sm primary" id="padLock" type="button" aria-pressed="false" disabled>📌 위치 고정</button>
+            </div>
+          </div>
+          <p class="note" style="margin-top:8px">패드를 손가락이나 마우스로 문지르면 모델이 지금 보는 화면 방향대로 움직여요. 방향키 1mm, Shift+방향키 5mm. 점은 위에서 내려다본 위치예요. 원하는 곳에서 “위치 고정”을 누르면 더 이상 움직이지 않고, 새 모델을 불러와도 그 자리에 놓여요.</p>
         </div>
       </div>
 
@@ -1079,7 +1107,7 @@ $('#startBtn').addEventListener('click',function(){
 });
 $('#pauseBtn').addEventListener('click',function(){sim.running=!sim.running;this.textContent=sim.running?'일시정지':'재생'});
 $('#resetBtn').addEventListener('click',function(){
-  dropExample();clearAttachment();P.alive.fill(0);if(sim.pud)sim.pud.visible=false;sim.running=true;resetVol();$('#speedRange').value=1;updateSpeed();$('#pauseBtn').textContent='일시정지';
+  dropExample();resetPad();clearAttachment();P.alive.fill(0);if(sim.pud)sim.pud.visible=false;sim.running=true;resetVol();$('#speedRange').value=1;updateSpeed();$('#pauseBtn').textContent='일시정지';
   var o=sim.orbit;o.th=.65;o.ph=1.2;resetCamera();setMsg('');
 });
 $('#viewBtn').addEventListener('click',function(){var o=sim.orbit;o.th=.65;o.ph=1.2;resetCamera()});
@@ -1121,16 +1149,67 @@ function dropExample(){
   clearAttachment();
   var p=EX.prev||{len:'40',gap:'6'};
   if($('#mLen').value===EX.len)$('#mLen').value=p.len;
-  if($('#mGap').value===EX.gap)$('#mGap').value=p.gap;
+  if(!OFF.locked&&$('#mGap').value===EX.gap)$('#mGap').value=p.gap;
   EX.on=false;EX.prev=null;return true;
 }
 $('#exampleBtn').addEventListener('click',function(){
   if(!EX.on)EX.prev={len:$('#mLen').value,gap:$('#mGap').value};
-  $('#mLen').value=EX.len;$('#mGap').value=EX.gap;EX.on=true;
+  $('#mLen').value=EX.len;if(!OFF.locked){$('#mGap').value=EX.gap;OFF.x=0;OFF.z=0}EX.on=true;
   sim.srcPos=exampleGeometry();sim.srcZup=false;placeAttachment();setMsg('');
   setNote($('#simNote'),'예제 모델(수도꼭지 끝에 끼우는 층류 캡)을 배치했어요. 위쪽 14mm가 연결부에 끼워지고, 물은 출구 20mm 아래에서 나와 손을 씻을 공간이 남아요.');
 });
 ['#mLen','#mGap','#zUp'].forEach(function(s){$(s).addEventListener('change',function(){if(sim.srcPos)placeAttachment()})});
+
+/* ================= model move pad ================= */
+/* Offset (mm) of the attachment from the outlet axis. The mesh is moved with position during a drag and
+   collisions are tested in the mesh's baked frame, so moving never re-parses or re-grids the model. */
+var OFF={x:0,z:0,locked:false},PAD_MM_PER_PX=.25,OFF_MAX=150;
+function clampOff(v){return Math.max(-OFF_MAX,Math.min(OFF_MAX,v))}
+function offDelta(){var b=sim.attBase||{x:0,z:0};return {x:OFF.x-b.x,z:OFF.z-b.z}}
+function signedMm(v){v=Math.round(v);return (v>0?'+':'')+v}
+function applyOffset(){
+  if(sim.att){var d=offDelta();sim.att.position.set(d.x,0,d.z)}
+  var dot=$('#padDot');dot.style.left=(50+OFF.x/OFF_MAX*46)+'%';dot.style.top=(50+OFF.z/OFF_MAX*46)+'%';
+  if(sim.att)$('#padRead').textContent='좌우 '+signedMm(OFF.x)+' mm · 앞뒤 '+signedMm(OFF.z)+' mm · 출구 아래 '+(isNaN(num('#mGap'))?0:num('#mGap'))+' mm'+(OFF.locked?' · 고정됨':'');
+}
+function padState(){
+  var has=!!(sim.started&&sim.att),can=has&&!OFF.locked,pad=$('#pad');
+  pad.setAttribute('aria-disabled',can?'false':'true');pad.classList.toggle('locked',has&&OFF.locked);
+  ['#padUp','#padDown','#padCenter'].forEach(function(s){$(s).disabled=!can});
+  $('#padLock').disabled=!has;$('#mGap').disabled=has&&OFF.locked;
+  if(!has)$('#padRead').textContent='모델을 배치하면 움직일 수 있어요.';
+  applyOffset();
+}
+/* dx: right on screen, dy: down on screen (mm); mapped onto the floor plane using the camera's azimuth */
+function moveScreen(dx,dy){
+  if(OFF.locked||!sim.att)return;
+  var th=sim.orbit.th,rx=Math.cos(th),rz=-Math.sin(th),fx=-Math.sin(th),fz=-Math.cos(th);
+  OFF.x=clampOff(OFF.x+dx*rx-dy*fx);OFF.z=clampOff(OFF.z+dx*rz-dy*fz);applyOffset();
+}
+function setLock(on){
+  OFF.locked=on;var b=$('#padLock');b.setAttribute('aria-pressed',on?'true':'false');b.textContent=on?'🔓 고정 풀기':'📌 위치 고정';padState();
+}
+function resetPad(){OFF.x=0;OFF.z=0;setLock(false)}
+(function(){
+  var pad=$('#pad'),last=null;
+  function off(){return pad.getAttribute('aria-disabled')==='true'}
+  pad.addEventListener('pointerdown',function(e){if(off())return;pad.setPointerCapture(e.pointerId);last={x:e.clientX,y:e.clientY};pad.focus({preventScroll:true})});
+  pad.addEventListener('pointermove',function(e){if(!last)return;moveScreen((e.clientX-last.x)*PAD_MM_PER_PX,(e.clientY-last.y)*PAD_MM_PER_PX);last={x:e.clientX,y:e.clientY}});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){pad.addEventListener(t,function(){last=null})});
+  pad.addEventListener('keydown',function(e){
+    var s=e.shiftKey?5:1,m={ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]}[e.key];
+    if(!m||off())return;e.preventDefault();moveScreen(m[0],m[1]);
+  });
+  function gapBy(d){var g=$('#mGap'),v=(isNaN(num('#mGap'))?0:num('#mGap'))+d;g.value=Math.max(-60,Math.min(200,v));if(sim.srcPos)placeAttachment()}
+  $('#padUp').addEventListener('click',function(){gapBy(-1)});
+  $('#padDown').addEventListener('click',function(){gapBy(1)});
+  $('#padCenter').addEventListener('click',function(){OFF.x=0;OFF.z=0;applyOffset()});
+  $('#padLock').addEventListener('click',function(){
+    setLock(!OFF.locked);
+    setNote($('#simNote'),OFF.locked?'모델 위치를 고정했어요. 새 모델을 불러와도 이 자리에 놓여요.':'위치 고정을 풀었어요. 패드로 다시 움직일 수 있어요.');
+  });
+  padState();
+})();
 
 function col(h){return new THREE.Color(h)}
 function setPointScale(){var v=new THREE.Vector2();sim.ren.getDrawingBufferSize(v);sim.pu.value=v.y/(2*Math.tan(sim.cam.fov*Math.PI/360))}
@@ -1539,7 +1618,7 @@ function handleBuffer(buf,e,name){
     var pos;
     if(e==='stl')pos=parseSTL(buf);else if(e==='obj')pos=parseOBJ(buf);else if(e==='ply')pos=parsePLY(buf);else if(e==='off')pos=parseOFF(buf);
     else if(/^html?$/.test(e))pos=parseHTMLModel(buf);else pos=sniffAndParse(buf);
-    var hadEx=dropExample();
+    var hadEx=dropExample();if(!OFF.locked){OFF.x=0;OFF.z=0}
     sim.srcPos=pos;sim.srcZup=!(e==='glb'||e==='gltf');
     placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(hadEx?' 예제 모델은 빼고, 크기·간격은 예제 전 값으로 돌려놨어요.':''));
   }catch(err){setNote($('#simNote'),err.message,true)}
@@ -1564,7 +1643,7 @@ function loadSharedModel(m,url,e){
 /* --- attachment placement + collision grid --- */
 function clearAttachment(){
   if(sim.att){sim.scene.remove(sim.att);sim.att.geometry.dispose();sim.att=null}
-  sim.tris=null;sim.grid=null;sim.srcPos=null;
+  sim.tris=null;sim.grid=null;sim.srcPos=null;padState();
 }
 function placeAttachment(){
   if(!sim.srcPos||!sim.started)return;
@@ -1579,15 +1658,15 @@ function placeAttachment(){
   var target=Math.min(300,Math.max(5,num('#mLen')||40)),sc=target/size,gap=Math.max(-60,Math.min(200,isNaN(num('#mGap'))?0:num('#mGap'))),o=outlet();
   var cx=(mn[0]+mx[0])/2,cz=(mn[2]+mx[2])/2;
   for(i=0;i<n;i++){
-    a[i*3]=(a[i*3]-cx)*sc+o.x;
+    a[i*3]=(a[i*3]-cx)*sc+o.x+OFF.x;
     a[i*3+1]=(a[i*3+1]-mx[1])*sc+o.y-gap;
-    a[i*3+2]=(a[i*3+2]-cz)*sc+o.z;
+    a[i*3+2]=(a[i*3+2]-cz)*sc+o.z+OFF.z;
   }
   if(sim.att){sim.scene.remove(sim.att);sim.att.geometry.dispose()}
   var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(a,3));geo.computeVertexNormals();
   sim.att=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:0xf2b705,specular:0x777777,shininess:60,side:THREE.DoubleSide}));sim.att.castShadow=true;sim.att.receiveShadow=true;
   sim.scene.add(sim.att);
-  sim.tris=a;buildGrid(a);
+  sim.tris=a;buildGrid(a);sim.attBase={x:OFF.x,z:OFF.z};padState();
 }
 var GR=48;
 function buildGrid(a){
@@ -1677,14 +1756,14 @@ function spawn(tOff){
     spawnP(o.x+Math.cos(a2)*rad,o.y-3,o.z+Math.sin(a2)*rad,Math.cos(a2)*s2,-v*.8,Math.sin(a2)*s2,1,0,T)}}
 }
 function step(dt){
-  var useCol=$('#collide').checked&&sim.tris,landN=0,lx=0,lz=0,lx2=0,lz2=0;sim.tw=(sim.tw||0)+dt;
+  var useCol=$('#collide').checked&&sim.tris,od=offDelta(),landN=0,lx=0,lz=0,lx2=0,lz2=0;sim.tw=(sim.tw||0)+dt;
   for(var i=0;i<MAXP;i++){
     if(!P.alive[i])continue;var k=i*3,kind=P.kind[i];
     P.vel[k+1]-=GRAV*dt;P.age[i]+=dt;
     if(P.tb[i]>.02&&!kind){var ja=42000*P.tb[i]*dt;P.vel[k]+=(Math.random()-.5)*ja;P.vel[k+2]+=(Math.random()-.5)*ja}
     var x0=P.pos[k],y0=P.pos[k+1],z0=P.pos[k+2],x1=x0+P.vel[k]*dt,y1=y0+P.vel[k+1]*dt,z1=z0+P.vel[k+2]*dt;
     if(useCol){
-      var hit=segHit(x0,y0,z0,x1,y1,z1);
+      var hit=segHit(x0-od.x,y0,z0-od.z,x1-od.x,y1,z1-od.z);
       if(hit){
         var vd=P.vel[k]*hit.nx+P.vel[k+1]*hit.ny+P.vel[k+2]*hit.nz,e=1.08;
         P.vel[k]=(P.vel[k]-e*vd*hit.nx)*.85;P.vel[k+1]=(P.vel[k+1]-e*vd*hit.ny)*.85;P.vel[k+2]=(P.vel[k+2]-e*vd*hit.nz)*.85;
@@ -1749,7 +1828,7 @@ function loop(t){
   var STEPS=[
     {t:'튜토리얼을 시작해요',x:'이 사이트로 할 수 있는 일을 순서대로 안내할게요. 키보드 ← → 로도 넘길 수 있어요.',sel:null,go:'#top'},
     {t:'1. 3D 시뮬레이션 시작',x:'“3D 시뮬레이션 시작”을 누르면 수도꼭지와 물줄기가 나타나요. 드래그로 회전, 휠이나 두 손가락으로 확대할 수 있어요. 아래 “물줄기 출력” 슬라이더로 0~100%까지 물의 세기를 조절하고, 로그인하지 않았다면 공동 저장 안내 창이 떠요.',sel:'#startBtn'},
-    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. “모델 최대 길이”에 실제 크기(mm)를 넣으면 그 크기로 맞춰져요.',sel:'#upLabel'},
+    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. “모델 최대 길이”에 실제 크기(mm)를 넣으면 그 크기로 맞춰져요. 놓은 뒤에는 3D 화면 아래 “모델 이동 패드”로 위치를 옮기고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
     {t:'3. 충돌 켜고 끄기',x:'체크하면 물이 모델 표면에 부딪혀 흘러요. 끄면 같은 출구 조건의 직선 흐름이 나와서 전후 비교가 쉬워요.',sel:'#collide',up:'label'},
     {t:'4. 유량과 출구 지름 입력',x:'① 양동이로 받은 물의 양(mL)과 걸린 시간(초)으로 기존 유량을 구하고, ② 기존·개선 출구 지름(mm)을 넣으면 개선 유량이 추정돼요. 개선품도 직접 재었다면 ③에 넣어 측정값으로 계산할 수 있어요.',sel:'#qV',up:'.stack'},
     {t:'5. 결과 읽기',x:'기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
