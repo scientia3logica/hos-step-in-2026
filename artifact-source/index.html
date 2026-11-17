@@ -1079,7 +1079,7 @@ $('#startBtn').addEventListener('click',function(){
 });
 $('#pauseBtn').addEventListener('click',function(){sim.running=!sim.running;this.textContent=sim.running?'일시정지':'재생'});
 $('#resetBtn').addEventListener('click',function(){
-  clearAttachment();P.alive.fill(0);if(sim.pud)sim.pud.visible=false;sim.running=true;resetVol();$('#speedRange').value=1;updateSpeed();$('#pauseBtn').textContent='일시정지';
+  dropExample();clearAttachment();P.alive.fill(0);if(sim.pud)sim.pud.visible=false;sim.running=true;resetVol();$('#speedRange').value=1;updateSpeed();$('#pauseBtn').textContent='일시정지';
   var o=sim.orbit;o.th=.65;o.ph=1.2;resetCamera();setMsg('');
 });
 $('#viewBtn').addEventListener('click',function(){var o=sim.orbit;o.th=.65;o.ph=1.2;resetCamera()});
@@ -1114,8 +1114,19 @@ function exampleGeometry(){
   ring.forEach(function(c){t=t.concat(shiftTris(latheTris([[1.3,-22],[1.3,-34]],20),c[0],c[1]))});
   return Float32Array.from(t);
 }
+/* The example sets its own size/insertion; remember the user's values so they come back when the example is removed. */
+var EX={on:false,prev:null,len:'34',gap:'-14'};
+function dropExample(){
+  if(!EX.on)return false;
+  clearAttachment();
+  var p=EX.prev||{len:'40',gap:'6'};
+  if($('#mLen').value===EX.len)$('#mLen').value=p.len;
+  if($('#mGap').value===EX.gap)$('#mGap').value=p.gap;
+  EX.on=false;EX.prev=null;return true;
+}
 $('#exampleBtn').addEventListener('click',function(){
-  $('#mLen').value=34;$('#mGap').value=-14;
+  if(!EX.on)EX.prev={len:$('#mLen').value,gap:$('#mGap').value};
+  $('#mLen').value=EX.len;$('#mGap').value=EX.gap;EX.on=true;
   sim.srcPos=exampleGeometry();sim.srcZup=false;placeAttachment();setMsg('');
   setNote($('#simNote'),'예제 모델(수도꼭지 끝에 끼우는 층류 캡)을 배치했어요. 위쪽 14mm가 연결부에 끼워지고, 물은 출구 20mm 아래에서 나와 손을 씻을 공간이 남아요.');
 });
@@ -1528,8 +1539,9 @@ function handleBuffer(buf,e,name){
     var pos;
     if(e==='stl')pos=parseSTL(buf);else if(e==='obj')pos=parseOBJ(buf);else if(e==='ply')pos=parsePLY(buf);else if(e==='off')pos=parseOFF(buf);
     else if(/^html?$/.test(e))pos=parseHTMLModel(buf);else pos=sniffAndParse(buf);
+    var hadEx=dropExample();
     sim.srcPos=pos;sim.srcZup=!(e==='glb'||e==='gltf');
-    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.');
+    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(hadEx?' 예제 모델은 빼고, 크기·간격은 예제 전 값으로 돌려놨어요.':''));
   }catch(err){setNote($('#simNote'),err.message,true)}
 }
 $('#modelFile').addEventListener('change',function(){
