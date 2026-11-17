@@ -76,23 +76,27 @@ function lockWrites(){
 }
 
 /* ================= dimensions ================= */
-var DIMS={reach:80,height:110,od:20};
-var dimsLocal=lsGet('hos.dims',null);
-if(dimsLocal)DIMS=dimsLocal;
-function fillDims(){$('#dReach').value=DIMS.reach;$('#dH').value=DIMS.height;$('#dOD').value=DIMS.od}
+/* Measured at the school wash-stand: drop 258 mm (outlet to floor), outlet 80 mm from the wall, floor 263 mm deep
+   (wall to the front lip), outlet hole 15 mm. Height and connector OD are photo-based estimates. */
+var DIMS_DEF={reach:80,height:110,od:20,drop:258,depth:263,hole:15};
+var DIMS_KEYS=['reach','height','od','drop','depth','hole'];
+function mergeDims(d){var o={};DIMS_KEYS.forEach(function(k){var v=d&&+d[k];o[k]=v>0?v:DIMS_DEF[k]});o.hole=Math.min(o.hole,o.od*.9);return o}
+var DIMS=mergeDims(lsGet('hos.dims',null));
+var DIM_IDS={reach:'#dReach',height:'#dH',od:'#dOD',drop:'#dDrop',depth:'#dDepth',hole:'#dHole'};
+function fillDims(){DIMS_KEYS.forEach(function(k){$(DIM_IDS[k]).value=DIMS[k]})}
 fillDims();
 function applyDims(d){
-  DIMS={reach:d.reach,height:d.height,od:d.od};fillDims();
+  DIMS=mergeDims(d);fillDims();
   if(sim.started){buildFaucet();placeAttachment()}
 }
 $('#dSave').addEventListener('click',function(){
-  var d={reach:num('#dReach'),height:num('#dH'),od:num('#dOD')};
-  var ok=d.reach>=40&&d.reach<=400&&d.height>=60&&d.height<=500&&d.od>=6&&d.od<=60;
-  if(!ok){setNote($('#dNote'),'허용 범위: 출수구 40–400, 전체 높이 60–500, 외경 6–60 (mm)',true);return}
+  var d={};DIMS_KEYS.forEach(function(k){d[k]=num(DIM_IDS[k])});
+  var ok=d.reach>=40&&d.reach<=400&&d.height>=60&&d.height<=500&&d.od>=6&&d.od<=60&&d.drop>=100&&d.drop<=600&&d.depth>=120&&d.depth<=600&&d.hole>=5&&d.hole<=40&&d.hole<d.od;
+  if(!ok){setNote($('#dNote'),'허용 범위: 출수구 40–400, 전체 높이 60–500, 외경 6–60, 낙하 높이 100–600, 바닥 깊이 120–600, 구멍 지름 5–40 (외경보다 작게) (mm)',true);return}
   var btn=$('#dSave');btn.disabled=true;
   var done=function(msg,warn){btn.disabled=false;setNote($('#dNote'),msg,warn)};
   if(S.mode==='shared'&&S.db){
-    S.db.doc('lab/dimensions').set({reach:d.reach,height:d.height,od:d.od,updatedAt:Date.now()})
+    S.db.doc('lab/dimensions').set(Object.assign({},d,{updatedAt:Date.now()}))
       .then(function(){applyDims(d);done('공동 치수를 저장했어요.')})
       .catch(function(){done('저장하지 못했어요. 권한이나 연결을 확인해 주세요.',true)});
   }else{lsSet('hos.dims',d);applyDims(d);done('이 브라우저에 저장했어요.')}
@@ -413,70 +417,121 @@ function exampleGeometry(){
   return Float32Array.from(t);
 }
 /* The example sets its own size/insertion; remember the user's values so they come back when the example is removed. */
-var EX={on:false,prev:null,len:'34',gap:'-14'};
+var EX={on:false,prev:null,len:'34'};
 function dropExample(){
   if(!EX.on)return false;
   clearAttachment();
-  var p=EX.prev||{len:'40',gap:'6'};
-  if($('#mLen').value===EX.len)$('#mLen').value=p.len;
-  if(!OFF.locked&&$('#mGap').value===EX.gap)$('#mGap').value=p.gap;
+  if($('#mLen').value===EX.len)$('#mLen').value=EX.prev||'40';
   EX.on=false;EX.prev=null;return true;
 }
 $('#exampleBtn').addEventListener('click',function(){
-  if(!EX.on)EX.prev={len:$('#mLen').value,gap:$('#mGap').value};
-  $('#mLen').value=EX.len;if(!OFF.locked){$('#mGap').value=EX.gap;OFF.x=0;OFF.z=0}EX.on=true;
+  if(!EX.on)EX.prev=$('#mLen').value;
+  $('#mLen').value=EX.len;startPose();EX.on=true;
   sim.srcPos=exampleGeometry();sim.srcZup=false;placeAttachment();setMsg('');
-  setNote($('#simNote'),'예제 모델(수도꼭지 끝에 끼우는 층류 캡)을 배치했어요. 위쪽 14mm가 연결부에 끼워지고, 물은 출구 20mm 아래에서 나와 손을 씻을 공간이 남아요.');
+  setNote($('#simNote'),'예제 모델(수도꼭지 끝에 끼우는 층류 캡)을 바닥에 놓았어요. 이동 패드의 높이 ▲로 올려 “출구 아래 간격”이 −14mm가 되면 위쪽 14mm가 연결부에 끼워진 실제 장착 위치예요.');
 });
-['#mLen','#mGap','#zUp'].forEach(function(s){$(s).addEventListener('change',function(){if(sim.srcPos)placeAttachment()})});
+['#mLen','#zUp'].forEach(function(s){$(s).addEventListener('change',function(){if(sim.srcPos)placeAttachment()})});
 
 /* ================= model move pad ================= */
-/* Offset (mm) of the attachment from the outlet axis. The mesh is moved with position during a drag and
-   collisions are tested in the mesh's baked frame, so moving never re-parses or re-grids the model. */
-var OFF={x:0,z:0,locked:false},PAD_MM_PER_PX=.25,OFF_MAX=150;
-function clampOff(v){return Math.max(-OFF_MAX,Math.min(OFF_MAX,v))}
-function offDelta(){var b=sim.attBase||{x:0,z:0};return {x:OFF.x-b.x,z:OFF.z-b.z}}
+/* The attachment is baked once in its own frame (centred on x/z, bottom at y=0). Moving and turning only set the
+   mesh's position/rotation; collisions transform each drop's path into that frame, so big models stay smooth. */
+var OFF={x:0,y:0,z:0,r:0,locked:false},FLOOR=.5,MAP_X=150;
+var HOLD_STEP={x:1,z:1,y:1,r:15},HOLD_V0={x:12,z:12,y:10,r:45},HOLD_V1={x:90,z:90,y:60,r:120},HOLD_DELAY=280,HOLD_RAMP=1200;
+function attFrame(){var o=outlet(),a=OFF.r*Math.PI/180;return {x:o.x+OFF.x,y:OFF.y+FLOOR,z:o.z+OFF.z,c:Math.cos(a),s:Math.sin(a)}}
+/* top-down area the pad shows and the model may use: basin interior in front of the wall, ±MAP_X around the outlet */
+function mapArea(){var g=fgeom(),half=Math.min(MAP_X,(g.sp*2+240)/2-36);return {x0:-half,x1:half,z0:0,z1:g.depth}}
+function footprint(){var a=OFF.r*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),ex=sim.attEx||0,ez=sim.attEz||0;return {hx:c*ex+s*ez,hz:s*ex+c*ez}}
+function heightMax(){var o=outlet();return Math.max(0,Math.floor(o.y+60-(sim.attH||0)))}
+function clampOff(){
+  if(!sim.att)return;
+  var o=outlet(),m=mapArea(),f=footprint();
+  function lim(v,lo,hi){return lo>hi?(lo+hi)/2:Math.max(lo,Math.min(hi,v))}
+  OFF.x=lim(o.x+OFF.x,m.x0+f.hx,m.x1-f.hx)-o.x;
+  OFF.z=lim(o.z+OFF.z,m.z0+f.hz+1,m.z1-f.hz)-o.z;
+  OFF.y=Math.max(0,Math.min(heightMax(),OFF.y));
+}
 function signedMm(v){v=Math.round(v);return (v>0?'+':'')+v}
 function applyOffset(){
-  if(sim.att){var d=offDelta();sim.att.position.set(d.x,0,d.z)}
-  var dot=$('#padDot');dot.style.left=(50+OFF.x/OFF_MAX*46)+'%';dot.style.top=(50+OFF.z/OFF_MAX*46)+'%';
-  if(sim.att)$('#padRead').textContent='좌우 '+signedMm(OFF.x)+' mm · 앞뒤 '+signedMm(OFF.z)+' mm · 출구 아래 '+(isNaN(num('#mGap'))?0:num('#mGap'))+' mm'+(OFF.locked?' · 고정됨':'');
+  var o=outlet(),m=mapArea(),W=m.x1-m.x0,D=m.z1-m.z0,pad=$('#pad');
+  pad.style.aspectRatio=W+' / '+D;
+  var po=$('#padOutlet');po.style.left=((o.x-m.x0)/W*100)+'%';po.style.top=((o.z-m.z0)/D*100)+'%';
+  var pm=$('#padModel'),has=!!(sim.started&&sim.att);pm.hidden=!has;$('#padHint').hidden=has;
+  if(!has)return;
+  var F=attFrame();sim.att.position.set(F.x,F.y,F.z);sim.att.rotation.y=OFF.r*Math.PI/180;
+  pm.style.left=((F.x-m.x0)/W*100)+'%';pm.style.top=((F.z-m.z0)/D*100)+'%';
+  pm.style.width=Math.max(2,2*sim.attEx/W*100)+'%';pm.style.height=Math.max(2,2*sim.attEz/D*100)+'%';
+  pm.style.transform='translate(-50%,-50%) rotate('+(-OFF.r)+'deg)';
+  var hm=heightMax(),hi=$('#padH');hi.max=hm;hi.value=Math.round(OFF.y);
+  $('#padHVal').textContent=Math.round(OFF.y)+' mm';$('#padAng').textContent=Math.round(OFF.r)+'°';
+  $('#mGap').value=Math.round(o.y-OFF.y-FLOOR-(sim.attH||0));
+  $('#padRead').textContent='좌우 '+signedMm(OFF.x)+' · 앞뒤 '+signedMm(OFF.z)+' · 바닥에서 '+Math.round(OFF.y)+' mm · 방향 '+Math.round(OFF.r)+'°'+(OFF.locked?' · 고정됨':'');
 }
 function padState(){
   var has=!!(sim.started&&sim.att),can=has&&!OFF.locked,pad=$('#pad');
   pad.setAttribute('aria-disabled',can?'false':'true');pad.classList.toggle('locked',has&&OFF.locked);
-  ['#padUp','#padDown','#padCenter'].forEach(function(s){$(s).disabled=!can});
+  document.querySelectorAll('#movePad [data-hold],#padCenter,#padH').forEach(function(b){b.disabled=!can});
   $('#padLock').disabled=!has;$('#mGap').disabled=has&&OFF.locked;
-  if(!has)$('#padRead').textContent='모델을 배치하면 움직일 수 있어요.';
+  if(!has){$('#padRead').textContent='모델을 배치하면 움직일 수 있어요.';stopHold()}
   applyOffset();
 }
-/* dx: right on screen, dy: down on screen (mm); mapped onto the floor plane using the camera's azimuth */
-function moveScreen(dx,dy){
+function nudge(kind,dir,amt){
   if(OFF.locked||!sim.att)return;
-  var th=sim.orbit.th,rx=Math.cos(th),rz=-Math.sin(th),fx=-Math.sin(th),fz=-Math.cos(th);
-  OFF.x=clampOff(OFF.x+dx*rx-dy*fx);OFF.z=clampOff(OFF.z+dx*rz-dy*fz);applyOffset();
+  if(kind==='r')OFF.r=((OFF.r+dir*amt)%360+360)%360;else OFF[kind]+=dir*amt;
+  clampOff();applyOffset();
 }
 function setLock(on){
   OFF.locked=on;var b=$('#padLock');b.setAttribute('aria-pressed',on?'true':'false');b.textContent=on?'🔓 고정 풀기':'📌 위치 고정';padState();
 }
-function resetPad(){OFF.x=0;OFF.z=0;setLock(false)}
+function resetPad(){OFF.x=0;OFF.y=0;OFF.z=0;OFF.r=0;setLock(false)}
+/* new model: start on the floor under the outlet, unless the position is locked */
+function startPose(){if(!OFF.locked){OFF.x=0;OFF.y=0;OFF.z=0;OFF.r=0}}
+/* press-and-hold: one small step at once, then continuous movement that speeds up */
+var HOLD=null;
+function stopHold(){if(HOLD){cancelAnimationFrame(HOLD.raf);if(HOLD.btn)HOLD.btn.classList.remove('holding');HOLD=null}}
+function startHold(kind,dir,btn){
+  stopHold();nudge(kind,dir,HOLD_STEP[kind]);
+  var t0=performance.now(),last=t0;HOLD={raf:0,btn:btn||null,kind:kind,dir:dir};if(btn)btn.classList.add('holding');
+  function tick(now){
+    if(!HOLD)return;var dt=Math.min(.25,(now-last)/1000),el=now-t0;last=now;
+    if(el>HOLD_DELAY){var k=Math.min(1,(el-HOLD_DELAY)/HOLD_RAMP),v=HOLD_V0[kind]+(HOLD_V1[kind]-HOLD_V0[kind])*k*k;nudge(kind,dir,v*dt)}
+    HOLD.raf=requestAnimationFrame(tick);
+  }
+  HOLD.raf=requestAnimationFrame(tick);
+}
 (function(){
-  var pad=$('#pad'),last=null;
+  var pad=$('#pad'),drag=null;
   function off(){return pad.getAttribute('aria-disabled')==='true'}
-  pad.addEventListener('pointerdown',function(e){if(off())return;pad.setPointerCapture(e.pointerId);last={x:e.clientX,y:e.clientY};pad.focus({preventScroll:true})});
-  pad.addEventListener('pointermove',function(e){if(!last)return;moveScreen((e.clientX-last.x)*PAD_MM_PER_PX,(e.clientY-last.y)*PAD_MM_PER_PX);last={x:e.clientX,y:e.clientY}});
-  ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){pad.addEventListener(t,function(){last=null})});
-  pad.addEventListener('keydown',function(e){
-    var s=e.shiftKey?5:1,m={ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]}[e.key];
-    if(!m||off())return;e.preventDefault();moveScreen(m[0],m[1]);
+  function toWorld(e){var r=pad.getBoundingClientRect(),m=mapArea();return {x:m.x0+(e.clientX-r.left)/r.width*(m.x1-m.x0),z:m.z0+(e.clientY-r.top)/r.height*(m.z1-m.z0)}}
+  pad.addEventListener('pointerdown',function(e){
+    if(off())return;e.preventDefault();pad.setPointerCapture(e.pointerId);pad.focus({preventScroll:true});
+    var w=toWorld(e),F=attFrame(),f=footprint(),grab=Math.abs(w.x-F.x)<=f.hx+6&&Math.abs(w.z-F.z)<=f.hz+6;
+    drag={dx:grab?F.x-w.x:0,dz:grab?F.z-w.z:0};pad.classList.add('dragging');move(e);
   });
-  function gapBy(d){var g=$('#mGap'),v=(isNaN(num('#mGap'))?0:num('#mGap'))+d;g.value=Math.max(-60,Math.min(200,v));if(sim.srcPos)placeAttachment()}
-  $('#padUp').addEventListener('click',function(){gapBy(-1)});
-  $('#padDown').addEventListener('click',function(){gapBy(1)});
-  $('#padCenter').addEventListener('click',function(){OFF.x=0;OFF.z=0;applyOffset()});
+  function move(e){if(!drag)return;var w=toWorld(e),o=outlet();OFF.x=w.x+drag.dx-o.x;OFF.z=w.z+drag.dz-o.z;clampOff();applyOffset()}
+  pad.addEventListener('pointermove',move);
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){pad.addEventListener(t,function(){drag=null;pad.classList.remove('dragging')})});
+  var KEYS={ArrowLeft:['x',-1],ArrowRight:['x',1],ArrowUp:['z',-1],ArrowDown:['z',1],q:['r',1],Q:['r',1],e:['r',-1],E:['r',-1],PageUp:['y',1],PageDown:['y',-1]};
+  pad.addEventListener('keydown',function(e){var k=KEYS[e.key];if(!k||off())return;e.preventDefault();if(e.repeat)return;startHold(k[0],k[1])});
+  pad.addEventListener('keyup',function(e){if(KEYS[e.key])stopHold()});
+  pad.addEventListener('blur',stopHold);
+  document.querySelectorAll('#movePad [data-hold]').forEach(function(b){
+    var kind=b.dataset.hold,dir=+b.dataset.dir;
+    b.addEventListener('pointerdown',function(e){if(b.disabled)return;e.preventDefault();b.setPointerCapture(e.pointerId);startHold(kind,dir,b)});
+    ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){b.addEventListener(t,stopHold)});
+    b.addEventListener('contextmenu',function(e){e.preventDefault()});
+    b.addEventListener('click',function(e){if(e.detail===0)nudge(kind,dir,HOLD_STEP[kind])}); /* keyboard Enter/Space */
+    b.addEventListener('keydown',function(e){if((e.key===' '||e.key==='Enter')&&e.repeat){e.preventDefault();nudge(kind,dir,HOLD_STEP[kind]*2)}});
+  });
+  window.addEventListener('blur',stopHold);
+  $('#padH').addEventListener('input',function(){if(OFF.locked)return;OFF.y=+this.value;clampOff();applyOffset()});
+  $('#padCenter').addEventListener('click',function(){OFF.x=0;OFF.z=0;clampOff();applyOffset()});
+  $('#mGap').addEventListener('change',function(){
+    if(!sim.att||OFF.locked)return;var g=num('#mGap');if(isNaN(g))g=0;
+    OFF.y=outlet().y-FLOOR-(sim.attH||0)-g;clampOff();applyOffset();
+  });
   $('#padLock').addEventListener('click',function(){
     setLock(!OFF.locked);
-    setNote($('#simNote'),OFF.locked?'모델 위치를 고정했어요. 새 모델을 불러와도 이 자리에 놓여요.':'위치 고정을 풀었어요. 패드로 다시 움직일 수 있어요.');
+    setNote($('#simNote'),OFF.locked?'모델 위치를 고정했어요. 새 모델을 불러와도 이 자리에 놓여요.':'위치 고정을 풀었어요. 다시 움직일 수 있어요.');
   });
   padState();
 })();
@@ -517,11 +572,11 @@ function initScene(){
   if(window.IntersectionObserver){new IntersectionObserver(function(en){sim.visible=en[0].isIntersecting}).observe(el)}
 }
 function fgeom(){
-  var D=DIMS.od,R=DIMS.reach,H=DIMS.height;
+  var D=DIMS.od,R=DIMS.reach,H=DIMS.height,hole=Math.min(DIMS.hole,D*.9),depth=Math.max(DIMS.depth,R+40);
   var rb=Math.min(D*1.3,Math.max(D*.6,(R-D)*.5)),connLen=D*1.7,collar=D*.7,vt=D*.35;
-  var yo=Math.max(90,H*.9),yw=yo+connLen+collar+vt+rb;
+  var yo=DIMS.drop,yw=yo+connLen+collar+vt+rb;
   var rise=Math.max(D*.6,H-(connLen+collar+vt+rb+D/2));
-  return {D:D,R:R,H:H,rb:rb,connLen:connLen,collar:collar,vt:vt,yo:yo,yw:yw,rise:rise,
+  return {D:D,R:R,H:H,hole:hole,depth:depth,rb:rb,connLen:connLen,collar:collar,vt:vt,yo:yo,yw:yw,rise:rise,
     sp:Math.max(340,D*17),xd:D*11.5,yc:yo+D*.6,rd:D*2.2,Hw:Math.max(430,yw+D*8)};
 }
 function outlet(){var g=fgeom();return {x:0,y:g.yo,z:g.R}}
@@ -582,7 +637,7 @@ function makeFaucet(g,M,plain){
   var band=add(new T.Mesh(new T.CylinderGeometry(D*.56,D*.56,cl*.15,44),M.dark));band.position.set(0,yo+cl*.575,R);
   var slv=add(new T.Mesh(new T.CylinderGeometry(D*.52,D*.52,cl*.35,44),M.steel));slv.position.set(0,yo+cl*.825,R);
   var grv=add(new T.Mesh(new T.CylinderGeometry(D*.545,D*.545,cl*.05,44),M.steelS));grv.position.set(0,yo+cl*.93,R);
-  var hole=add(new T.Mesh(new T.CircleGeometry(D*.34,32),M.hole));hole.rotation.x=Math.PI/2;hole.position.set(0,yo-.05,R);
+  var hole=add(new T.Mesh(new T.CircleGeometry(g.hole/2,32),M.hole));hole.rotation.x=Math.PI/2;hole.position.set(0,yo-.05,R);
   // valve housing + dome
   var zs=Math.max(D*1.25,hl*.45),y0=yw+D*.95;
   var hs=add(new T.Mesh(new T.CylinderGeometry(D*.62,D*.66,D*.62,40),M.steel));hs.position.set(0,yw+D*.62,zs);
@@ -694,7 +749,7 @@ function buildFaucet(){
   var flag=new T.Mesh(new T.PlaneGeometry(Ww,520),new T.MeshPhongMaterial({map:fc,bumpMap:fc,bumpScale:1.2,specular:0x1a1a1a,shininess:8}));
   flag.position.set(0,Hw+26+260,-24);flag.receiveShadow=true;grp.add(flag);
   // basin: slab, raised rim, wet dark floor, round drain
-  var bw=sp*2+240,bd=R*2+80;
+  var bw=sp*2+240,bd=g.depth+44;
   var stone=new T.Mesh(new T.BoxGeometry(bw,90,bd),granite('#5f6c72',[bw/220,bd/220],false));
   stone.position.set(0,-45,bd/2-8);stone.receiveShadow=true;grp.add(stone);
   var rimM=granite('#6a767c',[bw/240,.4],true);
@@ -888,9 +943,9 @@ function handleBuffer(buf,e,name){
     var pos;
     if(e==='stl')pos=parseSTL(buf);else if(e==='obj')pos=parseOBJ(buf);else if(e==='ply')pos=parsePLY(buf);else if(e==='off')pos=parseOFF(buf);
     else if(/^html?$/.test(e))pos=parseHTMLModel(buf);else pos=sniffAndParse(buf);
-    var hadEx=dropExample();if(!OFF.locked){OFF.x=0;OFF.z=0}
+    var hadEx=dropExample();startPose();
     sim.srcPos=pos;sim.srcZup=!(e==='glb'||e==='gltf');
-    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(hadEx?' 예제 모델은 빼고, 크기·간격은 예제 전 값으로 돌려놨어요.':''));
+    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(hadEx?' 예제 모델은 빼고, 크기는 예제 전 값으로 돌려놨어요.':''));
   }catch(err){setNote($('#simNote'),err.message,true)}
 }
 $('#modelFile').addEventListener('change',function(){
@@ -925,18 +980,20 @@ function placeAttachment(){
   var mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
   for(i=0;i<n;i++)for(var k=0;k<3;k++){var v=a[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v}
   var size=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])||1;
-  var target=Math.min(300,Math.max(5,num('#mLen')||40)),sc=target/size,gap=Math.max(-60,Math.min(200,isNaN(num('#mGap'))?0:num('#mGap'))),o=outlet();
+  var target=Math.min(300,Math.max(5,num('#mLen')||40)),sc=target/size;
   var cx=(mn[0]+mx[0])/2,cz=(mn[2]+mx[2])/2;
   for(i=0;i<n;i++){
-    a[i*3]=(a[i*3]-cx)*sc+o.x+OFF.x;
-    a[i*3+1]=(a[i*3+1]-mx[1])*sc+o.y-gap;
-    a[i*3+2]=(a[i*3+2]-cz)*sc+o.z+OFF.z;
+    a[i*3]=(a[i*3]-cx)*sc;
+    a[i*3+1]=(a[i*3+1]-mn[1])*sc;
+    a[i*3+2]=(a[i*3+2]-cz)*sc;
   }
   if(sim.att){sim.scene.remove(sim.att);sim.att.geometry.dispose()}
   var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(a,3));geo.computeVertexNormals();
   sim.att=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:0xf2b705,specular:0x777777,shininess:60,side:THREE.DoubleSide}));sim.att.castShadow=true;sim.att.receiveShadow=true;
   sim.scene.add(sim.att);
-  sim.tris=a;buildGrid(a);sim.attBase={x:OFF.x,z:OFF.z};padState();
+  sim.tris=a;buildGrid(a);
+  sim.attH=(mx[1]-mn[1])*sc;sim.attEx=(mx[0]-mn[0])*sc/2;sim.attEz=(mx[2]-mn[2])*sc/2;
+  clampOff();padState();
 }
 var GR=48;
 function buildGrid(a){
@@ -1026,15 +1083,17 @@ function spawn(tOff){
     spawnP(o.x+Math.cos(a2)*rad,o.y-3,o.z+Math.sin(a2)*rad,Math.cos(a2)*s2,-v*.8,Math.sin(a2)*s2,1,0,T)}}
 }
 function step(dt){
-  var useCol=$('#collide').checked&&sim.tris,od=offDelta(),landN=0,lx=0,lz=0,lx2=0,lz2=0;sim.tw=(sim.tw||0)+dt;
+  var useCol=$('#collide').checked&&sim.tris,F=useCol?attFrame():null,landN=0,lx=0,lz=0,lx2=0,lz2=0;sim.tw=(sim.tw||0)+dt;
   for(var i=0;i<MAXP;i++){
     if(!P.alive[i])continue;var k=i*3,kind=P.kind[i];
     P.vel[k+1]-=GRAV*dt;P.age[i]+=dt;
     if(P.tb[i]>.02&&!kind){var ja=42000*P.tb[i]*dt;P.vel[k]+=(Math.random()-.5)*ja;P.vel[k+2]+=(Math.random()-.5)*ja}
     var x0=P.pos[k],y0=P.pos[k+1],z0=P.pos[k+2],x1=x0+P.vel[k]*dt,y1=y0+P.vel[k+1]*dt,z1=z0+P.vel[k+2]*dt;
     if(useCol){
-      var hit=segHit(x0-od.x,y0,z0-od.z,x1-od.x,y1,z1-od.z);
+      var ax=x0-F.x,az=z0-F.z,bx=x1-F.x,bz=z1-F.z;
+      var hit=segHit(F.c*ax-F.s*az,y0-F.y,F.s*ax+F.c*az,F.c*bx-F.s*bz,y1-F.y,F.s*bx+F.c*bz);
       if(hit){
+        var hnx=F.c*hit.nx+F.s*hit.nz,hnz=-F.s*hit.nx+F.c*hit.nz;hit.nx=hnx;hit.nz=hnz;
         var vd=P.vel[k]*hit.nx+P.vel[k+1]*hit.ny+P.vel[k+2]*hit.nz,e=1.08;
         P.vel[k]=(P.vel[k]-e*vd*hit.nx)*.85;P.vel[k+1]=(P.vel[k+1]-e*vd*hit.ny)*.85;P.vel[k+2]=(P.vel[k+2]-e*vd*hit.nz)*.85;
         x1=x0+(x1-x0)*hit.t+hit.nx*.5;y1=y0+(y1-y0)*hit.t+hit.ny*.5;z1=z0+(z1-z0)*hit.t+hit.nz*.5;
@@ -1098,12 +1157,12 @@ function loop(t){
   var STEPS=[
     {t:'튜토리얼을 시작해요',x:'이 사이트로 할 수 있는 일을 순서대로 안내할게요. 키보드 ← → 로도 넘길 수 있어요.',sel:null,go:'#top'},
     {t:'1. 3D 시뮬레이션 시작',x:'“3D 시뮬레이션 시작”을 누르면 수도꼭지와 물줄기가 나타나요. 드래그로 회전, 휠이나 두 손가락으로 확대할 수 있어요. 아래 “물줄기 출력” 슬라이더로 0~100%까지 물의 세기를 조절하고, 로그인하지 않았다면 공동 저장 안내 창이 떠요.',sel:'#startBtn'},
-    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. “모델 최대 길이”에 실제 크기(mm)를 넣으면 그 크기로 맞춰져요. 놓은 뒤에는 3D 화면 아래 “모델 이동 패드”로 위치를 옮기고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
+    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. “모델 최대 길이”에 실제 크기(mm)를 넣으면 그 크기로 맞춰져요. 모델은 바닥에서 시작해요. 3D 화면 아래 “모델 이동 패드”에서 위치·높이·방향을 바꾸고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
     {t:'3. 충돌 켜고 끄기',x:'체크하면 물이 모델 표면에 부딪혀 흘러요. 끄면 같은 출구 조건의 직선 흐름이 나와서 전후 비교가 쉬워요.',sel:'#collide',up:'label'},
     {t:'4. 유량과 출구 지름 입력',x:'① 양동이로 받은 물의 양(mL)과 걸린 시간(초)으로 기존 유량을 구하고, ② 기존·개선 출구 지름(mm)을 넣으면 개선 유량이 추정돼요. 개선품도 직접 재었다면 ③에 넣어 측정값으로 계산할 수 있어요.',sel:'#qV',up:'.stack'},
     {t:'5. 결과 읽기',x:'기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
     {t:'6. 내 모델·자료 공유',x:'작성자와 파일을 고르고 “모델 공유하기”를 누르면 모두가 볼 수 있어요. STL·OBJ는 “시뮬레이터에 불러오기”로 바로 확인할 수 있어요.',sel:'#problem .grid2 > .panel:first-child'},
-    {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
+    {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경, 낙하 높이, 바닥 깊이, 출구 구멍 지름을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
     {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 올라온 글은 누구나 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
     {t:'9. 실험로그 올리기',x:'“실험로그” 탭에서 실험 일자를 고르고, 작성자와 실험 내용을 적어요. 한 번에 실험 하나씩 기록하세요. 게시 일자와 시간은 올리는 순간 자동으로 남아요.',sel:'#lgDate',up:'.stack',pre:function(){document.getElementById('tab-log').click()}},
     {t:'10. 모델 이미지 첨부',x:'실험한 모델의 사진이나 캡처를 20MB 이하로 첨부하면 로그 목록에 미리보기로 보여요. 실험로그 파일에는 그림 대신 이미지 파일 이름이 기록돼요.',sel:'#lgImg',pre:function(){document.getElementById('tab-log').click()}},

@@ -63,5 +63,9 @@ test('standalone shared storage: collections, delete keys, dimensions and blobs 
  assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:1,height:110,od:20})})).status,400);
  assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:90,height:110,od:20})})).status,200);
  assert.equal((await (await call('/api/db/lab/dimensions')).json()).data.reach,90);
+ assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:80,height:110,od:20,drop:258,depth:263,hole:15})})).status,200);
+ assert.deepEqual((({drop,depth,hole})=>({drop,depth,hole}))((await (await call('/api/db/lab/dimensions')).json()).data),{drop:258,depth:263,hole:15});
+ assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:80,height:110,od:20,drop:50})})).status,400);
+ assert.equal((await call('/api/db/lab/dimensions',{method:'PUT',body:JSON.stringify({reach:80,height:110,od:20,hole:25})})).status,400,'hole must be smaller than OD');
  }finally{await rm(directory,{recursive:true,force:true});}
 });
