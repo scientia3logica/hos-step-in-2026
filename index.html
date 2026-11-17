@@ -100,6 +100,19 @@
           <div><span class="vl">누적 물 사용량</span><b id="volVal">0 mL</b></div>
           <div class="vs"><span id="volTime">경과 0.0초</span><span id="volRate">현재 유량 –</span><span id="volCup"></span></div>
         </div>
+        <div class="movepad" id="movePad">
+          <div class="mp-head"><b>모델 이동 패드</b><span class="note" id="padRead">모델을 배치하면 움직일 수 있어요.</span></div>
+          <div class="mp-body">
+            <div class="pad" id="pad" tabindex="0" role="application" aria-label="모델 이동 패드. 드래그하거나 방향키로 모델을 앞뒤·좌우로 옮겨요." aria-disabled="true"><span>여기를 드래그해서 이동</span><i class="pad-dot" id="padDot" aria-hidden="true"></i></div>
+            <div class="mp-side">
+              <button class="btn sm" id="padUp" type="button" disabled>▲ 위로</button>
+              <button class="btn sm" id="padDown" type="button" disabled>▼ 아래로</button>
+              <button class="btn sm" id="padCenter" type="button" disabled>가운데로</button>
+              <button class="btn sm primary" id="padLock" type="button" aria-pressed="false" disabled>📌 위치 고정</button>
+            </div>
+          </div>
+          <p class="note" style="margin-top:8px">패드를 손가락이나 마우스로 문지르면 모델이 지금 보는 화면 방향대로 움직여요. 방향키 1mm, Shift+방향키 5mm. 점은 위에서 내려다본 위치예요. 원하는 곳에서 “위치 고정”을 누르면 더 이상 움직이지 않고, 새 모델을 불러와도 그 자리에 놓여요.</p>
+        </div>
       </div>
 
       <div class="panel">
