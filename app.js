@@ -78,7 +78,7 @@ function lockWrites(){
 /* ================= dimensions ================= */
 /* Measured at the school wash-stand: drop 258 mm (outlet to floor), outlet 80 mm from the wall, floor 263 mm deep
    (wall to the front lip), outlet hole 15 mm. Height and connector OD are photo-based estimates. */
-var DIMS_DEF={reach:80,height:110,od:20,drop:258,depth:263,hole:15};
+var DIMS_DEF={reach:80,height:110,od:15,drop:258,depth:263,hole:15};
 var DIMS_KEYS=['reach','height','od','drop','depth','hole'];
 function mergeDims(d){var o={};DIMS_KEYS.forEach(function(k){var v=d&&+d[k];o[k]=v>0?v:DIMS_DEF[k]});o.hole=Math.min(o.hole,o.od*.9);return o}
 var DIMS=mergeDims(lsGet('hos.dims',null));
@@ -92,7 +92,7 @@ function applyDims(d){
 $('#dSave').addEventListener('click',function(){
   var d={};DIMS_KEYS.forEach(function(k){d[k]=num(DIM_IDS[k])});
   var ok=d.reach>=40&&d.reach<=400&&d.height>=60&&d.height<=500&&d.od>=6&&d.od<=60&&d.drop>=100&&d.drop<=600&&d.depth>=120&&d.depth<=600&&d.hole>=5&&d.hole<=40&&d.hole<d.od;
-  if(!ok){setNote($('#dNote'),'허용 범위: 출수구 40–400, 전체 높이 60–500, 외경 6–60, 낙하 높이 100–600, 바닥 깊이 120–600, 구멍 지름 5–40 (외경보다 작게) (mm)',true);return}
+  if(!ok){setNote($('#dNote'),'허용 범위: 출수구 40–400, 전체 높이 60–500, 외경 6–60, 낙하 높이 100–600, 바닥 깊이 120–600, 출구 끝 지름 5–40 (외경보다 작게) (mm)',true);return}
   var btn=$('#dSave');btn.disabled=true;
   var done=function(msg,warn){btn.disabled=false;setNote($('#dNote'),msg,warn)};
   if(S.mode==='shared'&&S.db){
@@ -430,7 +430,9 @@ $('#exampleBtn').addEventListener('click',function(){
   sim.srcPos=exampleGeometry();sim.srcZup=false;placeAttachment();setMsg('');
   setNote($('#simNote'),'예제 모델(수도꼭지 끝에 끼우는 층류 캡)을 바닥에 놓았어요. 이동 패드의 높이 ▲로 올려 “출구 아래 간격”이 −14mm가 되면 위쪽 14mm가 연결부에 끼워진 실제 장착 위치예요.');
 });
-['#mLen','#zUp'].forEach(function(s){$(s).addEventListener('change',function(){if(sim.srcPos)placeAttachment()})});
+['#zUp','#mReal'].forEach(function(s){$(s).addEventListener('change',function(){if(sim.srcPos)placeAttachment()})});
+/* typing a length means “resize to this”, so real-size mode is switched off */
+$('#mLen').addEventListener('change',function(){$('#mReal').checked=false;if(sim.srcPos)placeAttachment()});
 
 /* ================= model move pad ================= */
 /* The attachment is baked once in its own frame (centred on x/z, bottom at y=0). Moving and turning only set the
@@ -617,7 +619,9 @@ function makeFaucet(g,M,plain){
   var T=THREE,grp=new T.Group(),D=g.D,R=g.R,rb=g.rb,yw=g.yw,yo=g.yo,i;
   function add(m){grp.add(m);return m}
   // wall flange (profile axis -> +z)
-  var fl=add(lathe([[0,0],[D*1.3,0],[D*1.33,D*.05],[D*1.25,D*.16],[D*.95,D*.22],[D*.86,D*.3],[D*.56,D*.34],[0,D*.34]],M.steel,56));
+  /* proportions checked against photos of the school tap: wide flange (~70 mm), small lever, quick-connect tip sized around the 15 mm hole */
+  var fr=D*2.2,tr=Math.max(D*.3,Math.min(g.hole/2,D*.4));
+  var fl=add(lathe([[0,0],[fr,0],[fr*1.02,D*.05],[fr*.96,D*.16],[fr*.73,D*.22],[fr*.66,D*.3],[D*.56,D*.34],[0,D*.34]],M.steel,56));
   fl.rotation.x=Math.PI/2;fl.position.set(0,yw,0);
   // horizontal body
   var hl=Math.max(1,R-rb);
@@ -629,34 +633,36 @@ function makeFaucet(g,M,plain){
   // short vertical tube + hex collar nut
   var vtm=add(new T.Mesh(new T.CylinderGeometry(D/2,D/2,g.vt+.2,40),M.steel));vtm.position.set(0,yw-rb-g.vt/2,R);
   var nutY=yo+g.connLen+g.collar/2;
-  var nut=add(new T.Mesh(new T.CylinderGeometry(D*.7,D*.7,g.collar*.82,6),M.steelS));nut.position.set(0,nutY,R);nut.rotation.y=Math.PI/6;
-  [-1,1].forEach(function(k){var w=add(new T.Mesh(new T.CylinderGeometry(D*.6,D*.6,g.collar*.12,40),M.steel));w.position.set(0,nutY+k*g.collar*.46,R)});
+  var nut=add(new T.Mesh(new T.CylinderGeometry(D*.58,D*.58,g.collar*.82,6),M.steelS));nut.position.set(0,nutY,R);nut.rotation.y=Math.PI/6;
+  [-1,1].forEach(function(k){var w=add(new T.Mesh(new T.CylinderGeometry(D*.52,D*.52,g.collar*.12,40),M.steel));w.position.set(0,nutY+k*g.collar*.46,R)});
   // quick-connect coupler: steel tip, black band, steel sleeve (outer diameter = D at the tip)
   var cl=g.connLen;
-  var tip=add(new T.Mesh(new T.CylinderGeometry(D*.5,D*.5,cl*.5,44),M.steel));tip.position.set(0,yo+cl*.25,R);
-  var band=add(new T.Mesh(new T.CylinderGeometry(D*.56,D*.56,cl*.15,44),M.dark));band.position.set(0,yo+cl*.575,R);
-  var slv=add(new T.Mesh(new T.CylinderGeometry(D*.52,D*.52,cl*.35,44),M.steel));slv.position.set(0,yo+cl*.825,R);
-  var grv=add(new T.Mesh(new T.CylinderGeometry(D*.545,D*.545,cl*.05,44),M.steelS));grv.position.set(0,yo+cl*.93,R);
-  var hole=add(new T.Mesh(new T.CircleGeometry(g.hole/2,32),M.hole));hole.rotation.x=Math.PI/2;hole.position.set(0,yo-.05,R);
+  var tip=add(new T.Mesh(new T.CylinderGeometry(tr,tr,cl*.5,44),M.steel));tip.position.set(0,yo+cl*.25,R);
+  var band=add(new T.Mesh(new T.CylinderGeometry(tr*1.12,tr*1.12,cl*.15,44),M.dark));band.position.set(0,yo+cl*.575,R);
+  var slv=add(new T.Mesh(new T.CylinderGeometry(Math.max(tr*1.06,D*.46),Math.max(tr*1.06,D*.46),cl*.35,44),M.steel));slv.position.set(0,yo+cl*.825,R);
+  var grv=add(new T.Mesh(new T.CylinderGeometry(Math.max(tr*1.1,D*.48),Math.max(tr*1.1,D*.48),cl*.05,44),M.steelS));grv.position.set(0,yo+cl*.93,R);
+  var hole=add(new T.Mesh(new T.CircleGeometry(tr*.62,32),M.hole));hole.rotation.x=Math.PI/2;hole.position.set(0,yo-.05,R);
   // valve housing + dome
-  var zs=Math.max(D*1.25,hl*.45),y0=yw+D*.95;
-  var hs=add(new T.Mesh(new T.CylinderGeometry(D*.62,D*.66,D*.62,40),M.steel));hs.position.set(0,yw+D*.62,zs);
-  var dm=add(new T.Mesh(new T.SphereGeometry(D*.62,36,14,0,Math.PI*2,0,Math.PI/2),M.steel));dm.scale.y=.5;dm.position.set(0,yw+D*.93,zs);
+  /* tall valve housing standing right above the elbow (photo: housing top ≈123 mm above the outlet tip) */
+  var zs=Math.max(D*1.25,R-rb*.9),hh=D*1.55,y0=yw+D*.35+hh;
+  var hs=add(new T.Mesh(new T.CylinderGeometry(D*.8,D*.86,hh,40),M.steel));hs.position.set(0,yw+D*.35+hh/2,zs);
+  var hn=add(new T.Mesh(new T.CylinderGeometry(D*.88,D*.88,D*.12,40),M.steelS));hn.position.set(0,yw+D*.35+hh*.45,zs);
+  var dm=add(new T.Mesh(new T.SphereGeometry(D*.8,36,14,0,Math.PI*2,0,Math.PI/2),M.steel));dm.scale.y=.4;dm.position.set(0,y0-.5,zs);
   // swan lever: tapered side profile (z,y) extruded sideways
-  var P0=[-.3*D,.1*D],P1=[.1*D,1.3*D],P2=[1.5*D,2.0*D],P3=[3.6*D,1.6*D],N=28,L=[],Rr=[];
+  var lk=.6,P0=[-.3*D*lk,.1*D*lk],P1=[.1*D*lk,1.3*D*lk],P2=[1.5*D*lk,2.0*D*lk],P3=[3.6*D*lk,1.6*D*lk],N=28,L=[],Rr=[];
   function bz(t,k){var u=1-t;return u*u*u*P0[k]+3*u*u*t*P1[k]+3*u*t*t*P2[k]+t*t*t*P3[k]}
   function db(t,k){var u=1-t;return 3*u*u*(P1[k]-P0[k])+6*u*t*(P2[k]-P1[k])+3*t*t*(P3[k]-P2[k])}
-  for(i=0;i<=N;i++){var t=i/N,cx=bz(t,0),cy=bz(t,1),dx=db(t,0),dy=db(t,1),dl=Math.hypot(dx,dy),nx=-dy/dl,ny=dx/dl,hw=D*(.56-.3*t);
+  for(i=0;i<=N;i++){var t=i/N,cx=bz(t,0),cy=bz(t,1),dx=db(t,0),dy=db(t,1),dl=Math.hypot(dx,dy),nx=-dy/dl,ny=dx/dl,hw=D*lk*(.56-.3*t);
     L.push([cx+nx*hw,cy+ny*hw]);Rr.push([cx-nx*hw,cy-ny*hw])}
   var sh=new T.Shape();sh.moveTo(L[0][0],L[0][1]);
   for(i=1;i<=N;i++)sh.lineTo(L[i][0],L[i][1]);
   for(i=N;i>=0;i--)sh.lineTo(Rr[i][0],Rr[i][1]);
   sh.closePath();
-  var lev=add(new T.Mesh(new T.ExtrudeGeometry(sh,{depth:D*.3,bevelEnabled:true,bevelThickness:D*.06,bevelSize:D*.06,bevelSegments:3,curveSegments:1}),M.steelS));
+  var lev=add(new T.Mesh(new T.ExtrudeGeometry(sh,{depth:D*.24,bevelEnabled:true,bevelThickness:D*.05,bevelSize:D*.05,bevelSegments:3,curveSegments:1}),M.steelS));
   lev.rotation.y=-Math.PI/2;lev.position.set(D*.15,y0,zs);
   var tx=db(1,0),ty=db(1,1),tl=Math.hypot(tx,ty);
-  var cap=add(new T.Mesh(new T.SphereGeometry(1,28,18),M.blue));cap.scale.set(D*.24,D*.36,D*.52);
-  cap.position.set(0,y0+P3[1]-ty/tl*D*.12,zs+P3[0]-tx/tl*D*.12);cap.rotation.x=-Math.atan2(ty,tx);
+  var cap=add(new T.Mesh(new T.SphereGeometry(1,28,18),M.blue));cap.scale.set(D*.18,D*.26,D*.36);
+  cap.position.set(0,y0+P3[1]-ty/tl*D*.08,zs+P3[0]-tx/tl*D*.08);cap.rotation.x=-Math.atan2(ty,tx);
   if(!plain){
     var xd=g.xd,yc=g.yc,rd=g.rd,td=D*.65,rt=Math.max(.9,D*.095),ybot=yo+cl*.78,yArch=yc+rd+D*.8,zW=.6;
     // recess ring + thick cream disc
@@ -945,7 +951,7 @@ function handleBuffer(buf,e,name){
     else if(/^html?$/.test(e))pos=parseHTMLModel(buf);else pos=sniffAndParse(buf);
     var hadEx=dropExample();startPose();
     sim.srcPos=pos;sim.srcZup=!(e==='glb'||e==='gltf');
-    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(hadEx?' 예제 모델은 빼고, 크기는 예제 전 값으로 돌려놨어요.':''));
+    placeAttachment();setMsg('');setNote($('#simNote'),name+' 모델을 배치했어요.'+(sim.scaleNote||'')+(hadEx?' 예제 모델은 빼고, 크기는 예제 전 값으로 돌려놨어요.':''));
   }catch(err){setNote($('#simNote'),err.message,true)}
 }
 $('#modelFile').addEventListener('change',function(){
@@ -980,7 +986,10 @@ function placeAttachment(){
   var mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
   for(i=0;i<n;i++)for(var k=0;k<3;k++){var v=a[i*3+k];if(v<mn[k])mn[k]=v;if(v>mx[k])mx[k]=v}
   var size=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])||1;
-  var target=Math.min(300,Math.max(5,num('#mLen')||40)),sc=target/size;
+  /* by default the file's numbers are taken as millimetres (real size); otherwise fit to “모델 최대 길이” */
+  var target=Math.min(300,Math.max(5,num('#mLen')||40)),real=$('#mReal').checked,unitOk=size>=5&&size<=600,sc=(real&&unitOk)?1:target/size;
+  sim.scaleNote=real&&!unitOk?' 파일 크기가 '+(size<5?'5mm보다 작아':'600mm보다 커')+' 단위가 다른 것 같아서 “모델 최대 길이”('+target+'mm)에 맞췄어요.':'';
+  if(real&&unitOk)$('#mLen').value=Math.round(size);
   var cx=(mn[0]+mx[0])/2,cz=(mn[2]+mx[2])/2;
   for(i=0;i<n;i++){
     a[i*3]=(a[i*3]-cx)*sc;
@@ -1157,12 +1166,12 @@ function loop(t){
   var STEPS=[
     {t:'튜토리얼을 시작해요',x:'이 사이트로 할 수 있는 일을 순서대로 안내할게요. 키보드 ← → 로도 넘길 수 있어요.',sel:null,go:'#top'},
     {t:'1. 3D 시뮬레이션 시작',x:'“3D 시뮬레이션 시작”을 누르면 수도꼭지와 물줄기가 나타나요. 드래그로 회전, 휠이나 두 손가락으로 확대할 수 있어요. 아래 “물줄기 출력” 슬라이더로 0~100%까지 물의 세기를 조절하고, 로그인하지 않았다면 공동 저장 안내 창이 떠요.',sel:'#startBtn'},
-    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. “모델 최대 길이”에 실제 크기(mm)를 넣으면 그 크기로 맞춰져요. 모델은 바닥에서 시작해요. 3D 화면 아래 “모델 이동 패드”에서 위치·높이·방향을 바꾸고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
+    {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. 모델은 파일에 적힌 실제 크기(mm) 그대로 놓이고, “모델 최대 길이”에 숫자를 넣으면 그 크기로 맞춰져요. 모델은 바닥에서 시작해요. 3D 화면 아래 “모델 이동 패드”에서 위치·높이·방향을 바꾸고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
     {t:'3. 충돌 켜고 끄기',x:'체크하면 물이 모델 표면에 부딪혀 흘러요. 끄면 같은 출구 조건의 직선 흐름이 나와서 전후 비교가 쉬워요.',sel:'#collide',up:'label'},
     {t:'4. 유량과 출구 지름 입력',x:'① 양동이로 받은 물의 양(mL)과 걸린 시간(초)으로 기존 유량을 구하고, ② 기존·개선 출구 지름(mm)을 넣으면 개선 유량이 추정돼요. 개선품도 직접 재었다면 ③에 넣어 측정값으로 계산할 수 있어요.',sel:'#qV',up:'.stack'},
     {t:'5. 결과 읽기',x:'기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
     {t:'6. 내 모델·자료 공유',x:'작성자와 파일을 고르고 “모델 공유하기”를 누르면 모두가 볼 수 있어요. STL·OBJ는 “시뮬레이터에 불러오기”로 바로 확인할 수 있어요.',sel:'#problem .grid2 > .panel:first-child'},
-    {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경, 낙하 높이, 바닥 깊이, 출구 구멍 지름을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
+    {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경, 낙하 높이, 바닥 깊이, 출구 끝 지름을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
     {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 올라온 글은 누구나 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
     {t:'9. 실험로그 올리기',x:'“실험로그” 탭에서 실험 일자를 고르고, 작성자와 실험 내용을 적어요. 한 번에 실험 하나씩 기록하세요. 게시 일자와 시간은 올리는 순간 자동으로 남아요.',sel:'#lgDate',up:'.stack',pre:function(){document.getElementById('tab-log').click()}},
     {t:'10. 모델 이미지 첨부',x:'실험한 모델의 사진이나 캡처를 20MB 이하로 첨부하면 로그 목록에 미리보기로 보여요. 실험로그 파일에는 그림 대신 이미지 파일 이름이 기록돼요.',sel:'#lgImg',pre:function(){document.getElementById('tab-log').click()}},
@@ -1437,8 +1446,8 @@ renderLogs();
       c:['지원하지 않는 형식이에요. (STL·OBJ·PLY·OFF·GLB·GLTF·HTML만 가능)','파일이 20MB를 넘거나 삼각형이 12만 개를 넘어요.','외부 .bin 파일을 쓰는 GLTF, 점만 있는 PLY, 3D 데이터가 없는 HTML이에요.'],
       f:['Blender·MeshLab 등으로 지원 형식(OBJ·STL·GLB)으로 저장하세요.','폴리곤을 줄이세요 (Decimate).','GLTF는 GLB로 저장하세요.','오류 이유는 시뮬레이터 아래 작은 글씨로 나와요. 내용을 읽어 보세요.']},
     {t:'3D',q:'모델이 너무 작거나 크고, 누워 있거나 거꾸로예요',
-      c:['파일의 단위를 자동으로 알 수 없어서 “모델 최대 길이”에 맞춰 크기를 정해요.','CAD 프로그램 모델은 Z축이 위쪽인 경우가 많아요.'],
-      f:['“모델 최대 길이(mm)”에 실제 길이를 넣으세요.','“CAD 모델(Z축이 위쪽)”을 체크해 보세요.','“출구 아래 간격”으로 높이를 조절하세요.']},
+      c:['파일 숫자를 mm로 보고 실제 크기로 놓는데, 파일이 cm·m·inch 단위로 저장됐을 수 있어요.','“모델 최대 길이”를 바꾸면 실제 크기 대신 그 길이에 맞춰져요.','CAD 프로그램 모델은 Z축이 위쪽인 경우가 많아요.'],
+      f:['“파일의 실제 크기(mm) 그대로 사용”을 켜 보세요.','단위가 다르면 “모델 최대 길이(mm)”에 실제 길이를 넣으세요.','“CAD 모델(Z축이 위쪽)”을 체크해 보세요.','“출구 아래 간격”으로 높이를 조절하세요.']},
     {t:'3D',q:'물이 모델을 그냥 통과해요',
       c:['“모델 표면 충돌 적용”이 꺼져 있어요.','모델이 물줄기 바로 아래에 있지 않아요.','모델 표면에 구멍이 있거나 열린 면이에요.'],
       f:['충돌 체크박스를 켜세요.','시점을 돌려 모델이 출구 바로 아래인지 확인하고 간격·길이를 조정하세요.','모델의 열린 면을 닫아서 다시 올려 보세요.']},

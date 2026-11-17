@@ -85,7 +85,7 @@
   <div class="wrap">
     <div class="sec-head">
       <h2>내 모델을 결합하고, 물의 흐름을 살펴보세요.</h2>
-      <p>학교 수돗가 사진을 참고한 벽면 고정형 레버 수도꼭지입니다. 원형 벽 고정판, 직각으로 꺾인 몸체, 아래를 향한 호스 연결부, 가는 곡선관으로 이어진 원형 버튼통, 석재 수조와 배수구를 반영했습니다. 낙하 높이(출구~바닥 258mm), 벽과 출구 사이 거리(80mm), 바닥 깊이(벽~턱 263mm), 출구 구멍 지름(15mm)은 실측값이고, 나머지 치수는 사진을 참고한 값입니다. STL·OBJ·PLY·GLB 같은 3D 모델을 수도꼭지 아래에 배치하면, 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드한 모델은 이 브라우저에서만 처리됩니다.</p>
+      <p>학교 수돗가 사진을 참고한 벽면 고정형 레버 수도꼭지입니다. 원형 벽 고정판, 직각으로 꺾인 몸체, 아래를 향한 호스 연결부, 가는 곡선관으로 이어진 원형 버튼통, 석재 수조와 배수구를 반영했습니다. 낙하 높이(출구~바닥 258mm), 벽과 출구 사이 거리(80mm), 바닥 깊이(벽~턱 263mm), 출구 끝 지름(15mm)은 실측값이고, 나머지 치수는 이 실측값을 기준으로 사진에서 잰 값입니다. STL·OBJ·PLY·GLB 같은 3D 모델을 수도꼭지 아래에 배치하면, 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드한 모델은 이 브라우저에서만 처리됩니다.</p>
     </div>
 
     <div class="viewer-wrap">
@@ -165,6 +165,7 @@
             <div><label class="f" for="mLen">모델 최대 길이 (mm)</label><input class="field" id="mLen" type="number" min="5" max="300" step="1" value="40"></div>
             <div><label class="f" for="mGap">출구 아래 간격 (mm · 음수=끼워지는 길이)</label><input class="field" id="mGap" type="number" min="-60" max="600" step="1" value="6"></div>
           </div>
+          <label class="check"><input type="checkbox" id="mReal" checked> 파일의 실제 크기(mm) 그대로 사용 (끄거나 “모델 최대 길이”를 바꾸면 그 길이에 맞춰요)</label>
           <label class="check"><input type="checkbox" id="zUp"> CAD 모델 (Z축이 위쪽)</label>
           <p class="note" style="margin:2px 0 -4px"><b>① 기존 유량</b> · 양동이로 물을 받아 재세요</p>
           <div class="row">
@@ -195,7 +196,7 @@
           <summary>계산 가정과 한계 — 실제 성능 인증용이 아닙니다</summary>
           <p>물줄기는 중력과 삼각형 표면 충돌을 적용한 입자 경로 시각화이고, 눈으로 따라가기 쉽도록 느린 화면으로 재생합니다. 내부 유동, 난류, 압력 손실, 누수, 실제 비산량을 푸는 CFD 해석이 아니며, 입자 이동 속도는 보기 좋게 조정됩니다. 물 튐 수치는 제공하지 않습니다.</p>
           <p>절수량은 업로드 형상에서 자동 판정하지 않습니다. ① 양동이로 받은 물의 양과 시간으로 기존 유량(L/분)을 구하고, ② 기존·개선 출구 지름으로 같은 수압에서 유량이 출구 단면적에 비례한다고 가정해 <b>개선 유량 = 기존 유량 × (개선 지름 ÷ 기존 지름)²</b>로 추정합니다. 개선품으로도 같은 방법으로 물을 받아 쟀다면 그 값을 입력하면 추정 대신 측정값을 씁니다. 수도관 자체가 유량을 제한하면 추정이 실제보다 크게 나올 수 있으니 측정값으로 보정하세요. 구멍이 여러 개면 전체 출구 면적과 같은 면적의 원 지름을 입력하세요.</p>
-          <p>모델은 최대 길이에 맞춰 자동 축척됩니다. 원본 단위는 자동 인식하지 않으므로 실제 길이를 입력하세요. 복잡한 모델은 12만 삼각형 이하로 단순화해 주세요. 3D 엔진 로딩에는 인터넷 연결이 필요합니다.</p>
+          <p>모델은 파일의 숫자를 mm로 보고 실제 크기로 놓습니다. 5mm보다 작거나 600mm보다 크면 단위가 다른 것으로 보고 “모델 최대 길이”에 맞춥니다. 실제 크기 옵션을 끄면 항상 최대 길이에 맞춰 축척됩니다. 복잡한 모델은 12만 삼각형 이하로 단순화해 주세요. 3D 엔진 로딩에는 인터넷 연결이 필요합니다.</p>
         </details>
       </div>
     </div>
@@ -231,14 +232,14 @@
 
       <div class="panel">
         <h3 style="margin-bottom:6px">공동 수도꼭지 치수 · mm</h3>
-        <p class="note" style="margin-bottom:16px">누구나 수정할 수 있습니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 기본값 중 낙하 높이·벽 거리·바닥 깊이·구멍 지름은 학교 수돗가 실측값이고, 전체 높이·연결부 외경은 사진 기반 참고값입니다.</p>
+        <p class="note" style="margin-bottom:16px">누구나 수정할 수 있습니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 기본값 중 낙하 높이·벽 거리·바닥 깊이·출구 끝 지름은 학교 수돗가 실측값이고, 몸체 굵기(15mm)와 나머지 모양은 실측값에 맞춰 사진에서 잰 값입니다.</p>
         <div class="row">
           <div><label class="f" for="dReach">벽에서 출수구 중심까지</label><input class="field" id="dReach" type="number" min="40" max="400" step="1" value="80"></div>
           <div><label class="f" for="dH">전체 높이 (출구~레버)</label><input class="field" id="dH" type="number" min="60" max="500" step="1" value="110"></div>
-          <div><label class="f" for="dOD">연결부 외경 (몸체 굵기)</label><input class="field" id="dOD" type="number" min="6" max="60" step="1" value="20"></div>
+          <div><label class="f" for="dOD">연결부 외경 (몸체 굵기)</label><input class="field" id="dOD" type="number" min="6" max="60" step="1" value="15"></div>
           <div><label class="f" for="dDrop">낙하 높이 (출구~바닥)</label><input class="field" id="dDrop" type="number" min="100" max="600" step="1" value="258"></div>
           <div><label class="f" for="dDepth">바닥 깊이 (벽~턱)</label><input class="field" id="dDepth" type="number" min="120" max="600" step="1" value="263"></div>
-          <div><label class="f" for="dHole">출구 구멍 지름</label><input class="field" id="dHole" type="number" min="5" max="40" step="0.5" value="15"></div>
+          <div><label class="f" for="dHole">출구 끝 지름 (물 나오는 부분)</label><input class="field" id="dHole" type="number" min="5" max="40" step="0.5" value="15"></div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
           <button class="btn water" id="dSave">공동 치수 저장 · 모델 생성</button>
