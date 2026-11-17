@@ -48,6 +48,8 @@ async function shared(request,env,url){
   if(m==='GET'){const o=await bucket.get('db/lab/dimensions');return json({data:o?await o.json():null});}
   if(m==='PUT'){let d;try{d=await request.json();}catch{return err('잘못된 요청입니다.','bad_request',400);}const v={reach:Number(d&&d.reach),height:Number(d&&d.height),od:Number(d&&d.od)};
    if(!(v.reach>=40&&v.reach<=400&&v.height>=60&&v.height<=500&&v.od>=6&&v.od<=60))return err('허용 범위: 출수구 40–400, 전체 높이 60–500, 외경 6–60 (mm)','bad_request',400);
+   for(const [k,lo,hi] of [['drop',100,600],['depth',120,600],['hole',5,40]]){if(d[k]==null)continue;const n=Number(d[k]);if(!(n>=lo&&n<=hi))return err('허용 범위: 낙하 높이 100–600, 바닥 깊이 120–600, 구멍 지름 5–40 (mm)','bad_request',400);v[k]=n;}
+   if(v.hole!=null&&v.hole>=v.od)return err('출구 구멍 지름은 연결부 외경보다 작아야 해요.','bad_request',400);
    v.updatedAt=Date.now();await bucket.put('db/lab/dimensions',JSON.stringify(v));return json({data:v});}
  }
  const c=path.match(/^\/api\/db\/([a-z]+)(?:\/([a-z0-9]+))?$/);const spec=c&&COLS[c[1]];

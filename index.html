@@ -85,7 +85,7 @@
   <div class="wrap">
     <div class="sec-head">
       <h2>내 모델을 결합하고, 물의 흐름을 살펴보세요.</h2>
-      <p>학교 수돗가 사진을 참고한 벽면 고정형 레버 수도꼭지입니다. 원형 벽 고정판, 직각으로 꺾인 몸체, 아래를 향한 호스 연결부, 가는 곡선관으로 이어진 원형 버튼통, 석재 수조와 배수구를 반영했습니다. 치수는 실측 전 참고값입니다. STL·OBJ·PLY·GLB 같은 3D 모델을 수도꼭지 아래에 배치하면, 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드한 모델은 이 브라우저에서만 처리됩니다.</p>
+      <p>학교 수돗가 사진을 참고한 벽면 고정형 레버 수도꼭지입니다. 원형 벽 고정판, 직각으로 꺾인 몸체, 아래를 향한 호스 연결부, 가는 곡선관으로 이어진 원형 버튼통, 석재 수조와 배수구를 반영했습니다. 낙하 높이(출구~바닥 258mm), 벽과 출구 사이 거리(80mm), 바닥 깊이(벽~턱 263mm), 출구 구멍 지름(15mm)은 실측값이고, 나머지 치수는 사진을 참고한 값입니다. STL·OBJ·PLY·GLB 같은 3D 모델을 수도꼭지 아래에 배치하면, 표면에 부딪힌 물 입자의 경로를 근사해 보여줍니다. 업로드한 모델은 이 브라우저에서만 처리됩니다.</p>
     </div>
 
     <div class="viewer-wrap">
@@ -102,16 +102,35 @@
         </div>
         <div class="movepad" id="movePad">
           <div class="mp-head"><b>모델 이동 패드</b><span class="note" id="padRead">모델을 배치하면 움직일 수 있어요.</span></div>
-          <div class="mp-body">
-            <div class="pad" id="pad" tabindex="0" role="application" aria-label="모델 이동 패드. 드래그하거나 방향키로 모델을 앞뒤·좌우로 옮겨요." aria-disabled="true"><span>여기를 드래그해서 이동</span><i class="pad-dot" id="padDot" aria-hidden="true"></i></div>
+          <div class="pad" id="pad" tabindex="0" role="application" aria-label="모델 이동 패드. 위에서 내려다본 수조 지도예요. 누르거나 끌면 모델이 그 자리로 가요. 방향키로 이동, Q·E로 회전, PageUp·PageDown으로 높이를 바꿔요." aria-disabled="true">
+            <span class="pad-wall">벽</span>
+            <span class="pad-front">앞 (사용자 쪽)</span>
+            <i class="pad-outlet" id="padOutlet" aria-hidden="true"></i>
+            <i class="pad-model" id="padModel" aria-hidden="true"><b></b></i>
+            <span class="pad-hint" id="padHint">모델을 배치하면 움직일 수 있어요</span>
+          </div>
+          <div class="mp-ctrl">
+            <div class="dpad" role="group" aria-label="이동 방향키 (누르고 있으면 계속 이동)">
+              <button class="btn sm k-up" type="button" data-hold="z" data-dir="-1" aria-label="벽 쪽으로">▲</button>
+              <button class="btn sm k-left" type="button" data-hold="x" data-dir="-1" aria-label="왼쪽으로">◀</button>
+              <button class="btn sm k-mid" type="button" id="padCenter" aria-label="출구 바로 아래로">◎</button>
+              <button class="btn sm k-right" type="button" data-hold="x" data-dir="1" aria-label="오른쪽으로">▶</button>
+              <button class="btn sm k-down" type="button" data-hold="z" data-dir="1" aria-label="사용자 쪽으로">▼</button>
+            </div>
             <div class="mp-side">
-              <button class="btn sm" id="padUp" type="button" disabled>▲ 위로</button>
-              <button class="btn sm" id="padDown" type="button" disabled>▼ 아래로</button>
-              <button class="btn sm" id="padCenter" type="button" disabled>가운데로</button>
-              <button class="btn sm primary" id="padLock" type="button" aria-pressed="false" disabled>📌 위치 고정</button>
+              <div class="mp-row"><span class="mp-lab">방향</span>
+                <button class="btn sm" type="button" data-hold="r" data-dir="1" aria-label="왼쪽으로 돌리기">⟲</button>
+                <button class="btn sm" type="button" data-hold="r" data-dir="-1" aria-label="오른쪽으로 돌리기">⟳</button>
+                <output id="padAng" class="mp-val">0°</output></div>
+              <div class="mp-row"><span class="mp-lab">높이</span>
+                <button class="btn sm" type="button" data-hold="y" data-dir="-1" aria-label="아래로">▼</button>
+                <input type="range" id="padH" min="0" max="100" step="1" value="0" aria-label="바닥에서 높이 (mm)">
+                <button class="btn sm" type="button" data-hold="y" data-dir="1" aria-label="위로">▲</button>
+                <output id="padHVal" class="mp-val">0 mm</output></div>
+              <button class="btn sm primary" id="padLock" type="button" aria-pressed="false">📌 위치 고정</button>
             </div>
           </div>
-          <p class="note" style="margin-top:8px">패드를 손가락이나 마우스로 문지르면 모델이 지금 보는 화면 방향대로 움직여요. 방향키 1mm, Shift+방향키 5mm. 점은 위에서 내려다본 위치예요. 원하는 곳에서 “위치 고정”을 누르면 더 이상 움직이지 않고, 새 모델을 불러와도 그 자리에 놓여요.</p>
+          <p class="note" style="margin-top:8px">지도를 누르거나 끌면 모델이 그 자리로 가요. 모델을 잡고 끌면 튀지 않고 그대로 따라와요. 방향키·회전·높이 버튼은 한 번 누르면 조금, 누르고 있으면 점점 빠르게 계속 움직여요. 키보드: 방향키 이동, Q·E 회전, PageUp·PageDown 높이. 모델은 바닥에서 시작하고 바닥·벽·수조 테두리를 넘지 않아요. “위치 고정”을 누르면 새 모델을 불러와도 그 자리에 놓여요.</p>
         </div>
       </div>
 
@@ -144,7 +163,7 @@
         <div class="stack">
           <div class="row">
             <div><label class="f" for="mLen">모델 최대 길이 (mm)</label><input class="field" id="mLen" type="number" min="5" max="300" step="1" value="40"></div>
-            <div><label class="f" for="mGap">출구 아래 간격 (mm · 음수=끼워지는 길이)</label><input class="field" id="mGap" type="number" min="-60" max="200" step="1" value="6"></div>
+            <div><label class="f" for="mGap">출구 아래 간격 (mm · 음수=끼워지는 길이)</label><input class="field" id="mGap" type="number" min="-60" max="600" step="1" value="6"></div>
           </div>
           <label class="check"><input type="checkbox" id="zUp"> CAD 모델 (Z축이 위쪽)</label>
           <p class="note" style="margin:2px 0 -4px"><b>① 기존 유량</b> · 양동이로 물을 받아 재세요</p>
@@ -154,8 +173,8 @@
           </div>
           <p class="note" style="margin:2px 0 -4px"><b>② 출구 지름</b> · 자(캘리퍼스)로 안쪽 지름을 재세요</p>
           <div class="row">
-            <div><label class="f" for="dOld">기존 출구 지름 (mm)</label><input class="field" id="dOld" type="number" min="1" max="40" step="0.5" value="10"></div>
-            <div><label class="f" for="dNew">개선 출구 지름 (mm)</label><input class="field" id="dNew" type="number" min="1" max="40" step="0.5" value="8"></div>
+            <div><label class="f" for="dOld">기존 출구 지름 (mm)</label><input class="field" id="dOld" type="number" min="1" max="40" step="0.5" value="15"></div>
+            <div><label class="f" for="dNew">개선 출구 지름 (mm)</label><input class="field" id="dNew" type="number" min="1" max="40" step="0.5" value="12"></div>
           </div>
           <details class="opt">
             <summary>③ (선택) 개선품도 직접 재었다면 입력</summary>
@@ -212,11 +231,14 @@
 
       <div class="panel">
         <h3 style="margin-bottom:6px">공동 수도꼭지 치수 · mm</h3>
-        <p class="note" style="margin-bottom:16px">누구나 수정할 수 있습니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 사진 기반 기본값은 실측값이 아닙니다.</p>
+        <p class="note" style="margin-bottom:16px">누구나 수정할 수 있습니다. 마지막으로 저장한 값이 공통 기준이 됩니다. 기본값 중 낙하 높이·벽 거리·바닥 깊이·구멍 지름은 학교 수돗가 실측값이고, 전체 높이·연결부 외경은 사진 기반 참고값입니다.</p>
         <div class="row">
           <div><label class="f" for="dReach">벽에서 출수구 중심까지</label><input class="field" id="dReach" type="number" min="40" max="400" step="1" value="80"></div>
           <div><label class="f" for="dH">전체 높이 (출구~레버)</label><input class="field" id="dH" type="number" min="60" max="500" step="1" value="110"></div>
           <div><label class="f" for="dOD">연결부 외경 (몸체 굵기)</label><input class="field" id="dOD" type="number" min="6" max="60" step="1" value="20"></div>
+          <div><label class="f" for="dDrop">낙하 높이 (출구~바닥)</label><input class="field" id="dDrop" type="number" min="100" max="600" step="1" value="258"></div>
+          <div><label class="f" for="dDepth">바닥 깊이 (벽~턱)</label><input class="field" id="dDepth" type="number" min="120" max="600" step="1" value="263"></div>
+          <div><label class="f" for="dHole">출구 구멍 지름</label><input class="field" id="dHole" type="number" min="5" max="40" step="0.5" value="15"></div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px">
           <button class="btn water" id="dSave">공동 치수 저장 · 모델 생성</button>
