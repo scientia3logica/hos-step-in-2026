@@ -769,9 +769,6 @@ function buildFaucet(){
   cav.rotation.x=-Math.PI/2;cav.position.set(0,.4,bd/2-8);cav.receiveShadow=true;grp.add(cav);
   var dr=new T.Mesh(new T.CircleGeometry(36,56),new T.MeshPhongMaterial({map:drainTex(),specular:0xbbbbbb,shininess:80}));
   dr.rotation.x=-Math.PI/2;dr.position.set(0,.7,R);dr.receiveShadow=true;grp.add(dr);
-  /* blue circle: the 10 cm radius used for 물튀김정도 */
-  var ring=new T.Mesh(new T.RingGeometry(97,101,96),new T.MeshBasicMaterial({color:0x2a9fd6,transparent:true,opacity:.75,depthWrite:false}));
-  ring.rotation.x=-Math.PI/2;ring.position.set(0,.9,R);grp.add(ring);
   sim.group=grp;sim.scene.add(grp);
   var o=sim.orbit;o.tx=0;o.ty=(g.yo+g.yw)/2;o.tz=R*.5;
 }
@@ -1074,13 +1071,15 @@ function drawVol(){
 }
 function updateSpeed(){var v=+$('#speedRange').value||1;sim.speed=v;$('#speedVal').textContent=v.toFixed(1)+'x';$('#speedRange').setAttribute('aria-valuetext',v.toFixed(1)+'배속')}
 $('#speedRange').addEventListener('input',updateSpeed);updateSpeed();
-/* 물튀김정도 = water landing inside a 10 cm circle under the outlet / all water landing, over the last 1 s of simulated time.
-   Each drop is weighted by its volume (size³); a drop is counted where it lands, rests or leaves the scene. */
-var SPL={R:100,buf:[],t:0,inside:0,total:0,o:null};
-function splashTally(x,z,s){var w=s*s*s;SPL.total+=w;if(Math.hypot(x-SPL.o.x,z-SPL.o.z)<=SPL.R)SPL.inside+=w}
-function splashStep(dt){SPL.t+=dt;SPL.buf.push([SPL.t,SPL.inside,SPL.total]);SPL.inside=0;SPL.total=0;while(SPL.buf.length&&SPL.buf[0][0]<SPL.t-1)SPL.buf.shift()}
+/* 물튀김정도 = (water leaving the basin per second) / (all water from the tap per second), over the last 1 s of simulated time.
+   A drop has left the basin when it ends past the inner face of the front lip (턱) or the side lips, or leaves the scene.
+   The total is all water ending in the same second (equal to the tap's output in steady flow, so the value stays ≤ 100 %).
+   Each drop is weighted by its volume (size³) and counted where it lands, comes to rest or leaves the scene. */
+var SPL={buf:[],t:0,out:0,total:0,zIn:0,xIn:0};
+function splashTally(x,z,s){var w=s*s*s;SPL.total+=w;if(z>SPL.zIn||z<-5||Math.abs(x)>SPL.xIn)SPL.out+=w}
+function splashStep(dt){SPL.t+=dt;SPL.buf.push([SPL.t,SPL.out,SPL.total]);SPL.out=0;SPL.total=0;while(SPL.buf.length&&SPL.buf[0][0]<SPL.t-1)SPL.buf.shift()}
 function splashRatio(){var a=0,b=0;for(var i=0;i<SPL.buf.length;i++){a+=SPL.buf[i][1];b+=SPL.buf[i][2]}return b>0?a/b:null}
-function resetVol(){sim.vol=0;sim.tsec=0;SPL.buf=[];SPL.inside=0;SPL.total=0;SPL.t=0;drawVol()}
+function resetVol(){sim.vol=0;sim.tsec=0;SPL.buf=[];SPL.out=0;SPL.total=0;SPL.t=0;drawVol()}
 function spawnP(x,y,z,vx,vy,vz,kind,age,tb){
   var i,tries=0;tb=tb||0;
   do{i=P.next;P.next=(P.next+1)%MAXP;tries++}while(P.alive[i]&&tries<MAXP);
@@ -1106,7 +1105,7 @@ function spawn(tOff){
     spawnP(o.x+Math.cos(a2)*rad,o.y-3,o.z+Math.sin(a2)*rad,Math.cos(a2)*s2,-v*.8,Math.sin(a2)*s2,1,0,T)}}
 }
 function step(dt){
-  SPL.o=outlet();
+  var sg=fgeom();SPL.zIn=sg.depth;SPL.xIn=(sg.sp*2+240)/2-36;
   var useCol=$('#collide').checked&&sim.tris,F=useCol?attFrame():null,landN=0,lx=0,lz=0,lx2=0,lz2=0;sim.tw=(sim.tw||0)+dt;
   for(var i=0;i<MAXP;i++){
     if(!P.alive[i])continue;var k=i*3,kind=P.kind[i];
@@ -1185,7 +1184,7 @@ function loop(t){
     {t:'2. 모델 올리기',x:'STL·OBJ 파일을 올리거나 “예제 모델 배치”(수도꼭지에 끼우는 층류 캡)를 눌러 수도꼭지 아래에 부착물을 놓아 보세요. 모델은 파일에 적힌 실제 크기(mm) 그대로 놓이고, “모델 최대 길이”에 숫자를 넣으면 그 크기로 맞춰져요. 모델은 바닥에서 시작해요. 3D 화면 아래 “모델 이동 패드”에서 위치·높이·방향을 바꾸고 “위치 고정”으로 고정할 수 있어요.',sel:'#upLabel'},
     {t:'3. 충돌 켜고 끄기',x:'체크하면 물이 모델 표면에 부딪혀 흘러요. 끄면 같은 출구 조건의 직선 흐름이 나와서 전후 비교가 쉬워요.',sel:'#collide',up:'label'},
     {t:'4. 유량과 출구 지름 입력',x:'① 양동이로 받은 물의 양(mL)과 걸린 시간(초)으로 기존 유량을 구하고, ② 기존·개선 출구 지름(mm)을 넣으면 개선 유량이 추정돼요. 개선품도 직접 재었다면 ③에 넣어 측정값으로 계산할 수 있어요.',sel:'#qV',up:'.stack'},
-    {t:'5. 결과 읽기',x:'3D 화면 아래에 물튀김정도(수도꼭지 아래 반경 10cm 원 안으로 떨어지는 물의 비율)가 실시간으로 나와요. 기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
+    {t:'5. 결과 읽기',x:'3D 화면 아래에 물튀김정도(수도꼭지에서 나온 물 중 개수대 밖으로 튀어 나간 물의 비율, 낮을수록 좋아요)가 실시간으로 나와요. 기존 유량, 개선 유량, 절수율, 1분당 절수량이 바로 계산돼요. 값은 예시이니 실제 측정값으로 바꿔 주세요.',sel:'.results'},
     {t:'6. 내 모델·자료 공유',x:'작성자와 파일을 고르고 “모델 공유하기”를 누르면 모두가 볼 수 있어요. STL·OBJ는 “시뮬레이터에 불러오기”로 바로 확인할 수 있어요.',sel:'#problem .grid2 > .panel:first-child'},
     {t:'7. 공동 수도꼭지 치수',x:'벽에서 출수구까지, 전체 높이, 연결부 외경, 낙하 높이, 바닥 깊이, 출구 끝 지름을 바꾸고 저장하면 3D 모델이 그 치수로 다시 만들어져요. 마지막으로 저장한 값이 모두의 기준이 돼요.',sel:'#problem .grid2 > .panel:last-child'},
     {t:'8. 멤버 공간',x:'닉네임만 정하면 소통, 산출물 제안, 산출물 결과 탭에 글을 남길 수 있어요. 올라온 글은 누구나 삭제할 수 있어요.',sel:'#community .panel',pre:function(){document.getElementById('tab-talk').click()}},
