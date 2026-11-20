@@ -105,6 +105,7 @@
           <div class="pad" id="pad" tabindex="0" role="application" aria-label="모델 이동 패드. 위에서 내려다본 수조 지도예요. 누르거나 끌면 모델이 그 자리로 가요. 방향키로 이동, Q·E로 회전, PageUp·PageDown으로 높이를 바꿔요." aria-disabled="true">
             <span class="pad-wall">벽</span>
             <span class="pad-front">앞 (사용자 쪽)</span>
+            <i class="pad-rim" id="padRim" aria-hidden="true"><span>턱</span></i>
             <i class="pad-outlet" id="padOutlet" aria-hidden="true"></i>
             <i class="pad-model" id="padModel" aria-hidden="true"><b></b></i>
             <span class="pad-hint" id="padHint">모델을 배치하면 움직일 수 있어요</span>
@@ -130,7 +131,7 @@
               <button class="btn sm primary" id="padLock" type="button" aria-pressed="false">📌 위치 고정</button>
             </div>
           </div>
-          <p class="note" style="margin-top:8px">지도를 누르거나 끌면 모델이 그 자리로 가요. 모델을 잡고 끌면 튀지 않고 그대로 따라와요. 방향키·회전·높이 버튼은 한 번 누르면 조금, 누르고 있으면 점점 빠르게 계속 움직여요. 키보드: 방향키 이동, Q·E 회전, PageUp·PageDown 높이. 모델은 바닥에서 시작하고 바닥·벽·수조 테두리를 넘지 않아요. “위치 고정”을 누르면 새 모델을 불러와도 그 자리에 놓여요.</p>
+          <p class="note" style="margin-top:8px">지도를 누르거나 끌면 모델이 그 자리로 가요. 모델을 잡고 끌면 튀지 않고 그대로 따라와요. 방향키·회전·높이 버튼은 한 번 누르면 조금, 누르고 있으면 점점 빠르게 계속 움직여요. 키보드: 방향키 이동, Q·E 회전, PageUp·PageDown 높이. 모델은 바닥에서 시작하고 바닥·벽·턱을 뚫지 않아요. 지도 아래쪽 띠(턱)로 옮기면 턱 위에 올라가요(워터 가드처럼). “위치 고정”을 누르면 새 모델을 불러와도 그 자리에 놓여요.</p>
         </div>
       </div>
 

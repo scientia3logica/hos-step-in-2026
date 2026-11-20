@@ -439,11 +439,14 @@ $('#mLen').addEventListener('change',function(){$('#mReal').checked=false;if(sim
    mesh's position/rotation; collisions transform each drop's path into that frame, so big models stay smooth. */
 var OFF={x:0,y:0,z:0,r:0,locked:false},FLOOR=.5,MAP_X=150;
 var HOLD_STEP={x:1,z:1,y:1,r:15},HOLD_V0={x:12,z:12,y:10,r:45},HOLD_V1={x:90,z:90,y:60,r:120},HOLD_DELAY=280,HOLD_RAMP=1200;
-function attFrame(){var o=outlet(),a=OFF.r*Math.PI/180;return {x:o.x+OFF.x,y:OFF.y+FLOOR,z:o.z+OFF.z,c:Math.cos(a),s:Math.sin(a)}}
+/* front lip (턱) of the basin: models can be moved onto it; OFF.y is the height above whatever the model rests on */
+var RIM={h:24,w:36};
+function support(){var g=fgeom(),o=outlet(),f=footprint();return (o.z+OFF.z+f.hz>g.depth+.5)?RIM.h:0}
+function attFrame(){var o=outlet(),a=OFF.r*Math.PI/180;return {x:o.x+OFF.x,y:support()+OFF.y+FLOOR,z:o.z+OFF.z,c:Math.cos(a),s:Math.sin(a)}}
 /* top-down area the pad shows and the model may use: basin interior in front of the wall, ±MAP_X around the outlet */
-function mapArea(){var g=fgeom(),half=Math.min(MAP_X,(g.sp*2+240)/2-36);return {x0:-half,x1:half,z0:0,z1:g.depth}}
+function mapArea(){var g=fgeom(),half=Math.min(MAP_X,(g.sp*2+240)/2-36);return {x0:-half,x1:half,z0:0,z1:g.depth+RIM.w,rim:g.depth}}
 function footprint(){var a=OFF.r*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),ex=sim.attEx||0,ez=sim.attEz||0;return {hx:c*ex+s*ez,hz:s*ex+c*ez}}
-function heightMax(){var o=outlet();return Math.max(0,Math.floor(o.y+60-(sim.attH||0)))}
+function heightMax(){var o=outlet();return Math.max(0,Math.floor(o.y+60-(sim.attH||0)-support()))}
 function clampOff(){
   if(!sim.att)return;
   var o=outlet(),m=mapArea(),f=footprint();
@@ -456,6 +459,7 @@ function signedMm(v){v=Math.round(v);return (v>0?'+':'')+v}
 function applyOffset(){
   var o=outlet(),m=mapArea(),W=m.x1-m.x0,D=m.z1-m.z0,pad=$('#pad');
   pad.style.aspectRatio=W+' / '+D;
+  var pr=$('#padRim');pr.style.top=((m.rim-m.z0)/D*100)+'%';
   var po=$('#padOutlet');po.style.left=((o.x-m.x0)/W*100)+'%';po.style.top=((o.z-m.z0)/D*100)+'%';
   var pm=$('#padModel'),has=!!(sim.started&&sim.att);pm.hidden=!has;$('#padHint').hidden=has;
   if(!has)return;
@@ -465,8 +469,8 @@ function applyOffset(){
   pm.style.transform='translate(-50%,-50%) rotate('+(-OFF.r)+'deg)';
   var hm=heightMax(),hi=$('#padH');hi.max=hm;hi.value=Math.round(OFF.y);
   $('#padHVal').textContent=Math.round(OFF.y)+' mm';$('#padAng').textContent=Math.round(OFF.r)+'°';
-  $('#mGap').value=Math.round(o.y-OFF.y-FLOOR-(sim.attH||0));
-  $('#padRead').textContent='좌우 '+signedMm(OFF.x)+' · 앞뒤 '+signedMm(OFF.z)+' · 바닥에서 '+Math.round(OFF.y)+' mm · 방향 '+Math.round(OFF.r)+'°'+(OFF.locked?' · 고정됨':'');
+  var sup=support();$('#mGap').value=Math.round(o.y-sup-OFF.y-FLOOR-(sim.attH||0));
+  $('#padRead').textContent='좌우 '+signedMm(OFF.x)+' · 앞뒤 '+signedMm(OFF.z)+' · '+(sup?'턱 위 ':'바닥에서 ')+Math.round(OFF.y)+' mm · 방향 '+Math.round(OFF.r)+'°'+(OFF.locked?' · 고정됨':'');
 }
 function padState(){
   var has=!!(sim.started&&sim.att),can=has&&!OFF.locked,pad=$('#pad');
@@ -529,7 +533,7 @@ function startHold(kind,dir,btn){
   $('#padCenter').addEventListener('click',function(){OFF.x=0;OFF.z=0;clampOff();applyOffset()});
   $('#mGap').addEventListener('change',function(){
     if(!sim.att||OFF.locked)return;var g=num('#mGap');if(isNaN(g))g=0;
-    OFF.y=outlet().y-FLOOR-(sim.attH||0)-g;clampOff();applyOffset();
+    OFF.y=outlet().y-FLOOR-(sim.attH||0)-g-support();clampOff();applyOffset();
   });
   $('#padLock').addEventListener('click',function(){
     setLock(!OFF.locked);
@@ -759,7 +763,7 @@ function buildFaucet(){
   var stone=new T.Mesh(new T.BoxGeometry(bw,90,bd),granite('#5f6c72',[bw/220,bd/220],false));
   stone.position.set(0,-45,bd/2-8);stone.receiveShadow=true;grp.add(stone);
   var rimM=granite('#6a767c',[bw/240,.4],true);
-  var fr=new T.Mesh(new T.BoxGeometry(bw,24,36),rimM);fr.position.set(0,12,bd-8-18);fr.castShadow=true;fr.receiveShadow=true;grp.add(fr);
+  var fr=new T.Mesh(new T.BoxGeometry(bw,RIM.h,RIM.w),rimM);fr.position.set(0,RIM.h/2,g.depth+RIM.w/2);fr.castShadow=true;fr.receiveShadow=true;grp.add(fr);
   [-1,1].forEach(function(k){var s=new T.Mesh(new T.BoxGeometry(36,24,bd),granite('#6a767c',[.4,bd/240],true));s.position.set(k*(bw/2-18),12,bd/2-8);s.castShadow=true;s.receiveShadow=true;grp.add(s)});
   var cav=new T.Mesh(new T.PlaneGeometry(bw-72,bd-72),granite('#3a444a',[(bw-72)/200,(bd-72)/200],true));
   cav.rotation.x=-Math.PI/2;cav.position.set(0,.4,bd/2-8);cav.receiveShadow=true;grp.add(cav);
