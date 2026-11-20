@@ -337,3 +337,24 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
 .btn.holding{background:var(--water-soft)}
 #padLock[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:none}
 @media (max-width:460px){.mp-ctrl{grid-template-columns:1fr}.dpad{justify-self:center}}
+/* ---- v28: practical layout ---- */
+.hero{padding:clamp(28px,5vw,56px) 0 clamp(24px,4vw,40px)}
+.hero .hero-k{margin-bottom:8px}
+.hero h1{font-size:clamp(1.8rem,5vw,2.9rem);line-height:1.2;text-wrap:balance}
+.hero .lead{max-width:62ch;margin-top:12px;font-size:1rem}
+.hero .actions{margin-top:20px;gap:8px}
+section{padding:clamp(40px,7vw,80px) 0}
+.sec-head{margin-bottom:24px}
+.sec-head h2{font-size:clamp(1.5rem,3.6vw,2.1rem)}
+.sec-head p{margin-top:8px}
+.gh{font-family:var(--body);font-weight:700;font-size:.95rem;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.gh i{font-style:normal;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--water);color:#fff;font-size:.8rem}
+.grp+.grp{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.live{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px}
+.lv{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lv b{font-family:var(--display);font-weight:400;font-size:1.45rem;line-height:1.2;color:var(--ink);font-variant-numeric:tabular-nums}
+.lv small{font-size:.74rem;color:var(--muted);line-height:1.45}
+.lv-main b{font-size:2.1rem;color:var(--water)}
+@media (max-width:560px){.live{grid-template-columns:1fr 1fr}.lv-main{grid-column:1/-1}}
+footer.close{padding:32px 0 28px}
+footer.close .links{margin-top:0}
