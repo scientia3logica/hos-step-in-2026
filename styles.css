@@ -318,6 +318,8 @@ details.opt summary{cursor:pointer;font-size:.88rem;color:var(--muted);font-weig
 .pad-wall,.pad-front{position:absolute;left:0;right:0;text-align:center;font-size:.72rem;color:var(--muted);pointer-events:none}
 .pad-wall{top:2px}.pad-front{bottom:2px}
 .pad-hint{position:absolute;inset:0;display:grid;place-items:center;font-size:.82rem;color:var(--muted);pointer-events:none}
+.pad-rim{position:absolute;left:0;right:0;bottom:0;display:block;pointer-events:none;border-top:2px dashed color-mix(in srgb,var(--muted) 60%,transparent);background:color-mix(in srgb,var(--muted) 18%,transparent)}
+.pad-rim span{position:absolute;left:6px;top:2px;font-size:.7rem;color:var(--muted)}
 .pad-outlet{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px dashed var(--water);pointer-events:none}
 .pad-model{position:absolute;display:block;border-radius:4px;background:color-mix(in srgb,var(--signal) 55%,transparent);border:2px solid var(--signal);box-shadow:0 2px 8px rgba(0,0,0,.18);pointer-events:none;transition:box-shadow .15s}
 .pad-model b{position:absolute;left:50%;top:-1px;width:0;height:0;margin-left:-5px;border:5px solid transparent;border-bottom-color:var(--ink);transform:translateY(-100%)}
